@@ -90,7 +90,8 @@ public class EntityHandler<Entity> {
         List parameters;
         if (value != null) {
             selectQuery = cache.getSelectFullByEqualsOrContainsQuery();
-            parameters = Arrays.asList(getParameter(definition.getField(field), value));
+            parameters = Arrays.asList(getParameter(definition.getFieldEntity(field)
+                    .getField(field), value));
         } else if (cache instanceof CollectionFieldQueryCache) {
             return Collections.emptyList();
         } else {
@@ -106,7 +107,8 @@ public class EntityHandler<Entity> {
         List parameters;
         if (value != null) {
             collectQuery = cache.getSelectKeysByEqualsOrContainsQuery();
-            parameters = Arrays.asList(getParameter(definition.getField(field), value));
+            parameters = Arrays.asList(getParameter(definition.getFieldEntity(field)
+                    .getField(field), value));
         } else if (cache instanceof CollectionFieldQueryCache) {
             return Collections.emptyList();
         } else {
@@ -123,7 +125,8 @@ public class EntityHandler<Entity> {
         String selectQuery = queryCache.getFieldQueryCache(field)
                 .getSelectFullByAnyQuery(values.size());
         return executor.executeSelect(selectQuery,
-                getParameterList(definition.getField(field), values), selector);
+                getParameterList(definition.getFieldEntity(field).getField(field), values),
+                selector);
     }
 
     public List collectKeysByAny(String field, Collection values) {
@@ -133,7 +136,7 @@ public class EntityHandler<Entity> {
         String collectQuery = queryCache.getFieldQueryCache(field)
                 .getSelectKeysByAnyQuery(values.size());
         return executor.executeSelect(collectQuery,
-                getParameterList(definition.getField(field), values), keyCollector);
+                getParameterList(definition.getFieldEntity(field).getField(field), values), keyCollector);
     }
 
     public List<Entity> selectEntitiesByRegexp(String field, String regexp) {
@@ -196,7 +199,7 @@ public class EntityHandler<Entity> {
                 .getSelectCollectionQuery();
         String entityName = definition.getName();
         Object primaryKey = getPrimaryKey(entity);
-        String collectionEntityName = definition.getCollectionField(field)
+        String collectionEntityName = definition.getFieldEntity(field).getCollectionField(field)
                 .getReferencedEntity().getName();
         EntityHandler collectionHandler = handlerFactory.getHandler(collectionEntityName);
         List collection = (List) executor.executeSelect(selectCollectionQuery, Arrays.asList(primaryKey),
