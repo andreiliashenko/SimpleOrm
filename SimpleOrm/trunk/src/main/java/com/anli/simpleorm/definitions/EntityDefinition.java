@@ -1,8 +1,10 @@
 package com.anli.simpleorm.definitions;
 
+import com.anli.simpleorm.queries.named.NamedQuery;
 import java.util.Collection;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
@@ -15,12 +17,14 @@ public class EntityDefinition {
     protected String table;
     protected EntityDefinition parentEntity;
     protected final List<EntityDefinition> childrenEntities;
+    protected final Map<String, NamedQuery> namedQueries;
 
     public EntityDefinition(String name) {
         this.name = name;
         this.singleFields = new TreeMap<>();
         this.collectionFields = new TreeMap<>();
         this.childrenEntities = new LinkedList<>();
+        this.namedQueries = new TreeMap<>();
     }
 
     public void setPrimaryKeyName(String primaryKeyName) {
@@ -78,6 +82,22 @@ public class EntityDefinition {
     public void addChildrenEntity(EntityDefinition childrenEntity) {
         this.childrenEntities.add(childrenEntity);
         childrenEntity.parentEntity = this;
+    }
+
+    public void addNamedQuery(NamedQuery query) {
+        this.namedQueries.put(query.getName(), query);
+    }
+
+    public NamedQuery getNamedQuery(String queryName) {
+        EntityDefinition currentEntity = this;
+        while (currentEntity != null) {
+            NamedQuery query = namedQueries.get(queryName);
+            if (query != null) {
+                return query;
+            }
+            currentEntity = currentEntity.getParentEntity();
+        }
+        return null;
     }
 
     public FieldDefinition getField(String fieldName) {

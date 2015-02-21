@@ -193,6 +193,40 @@ public class EntityHandler<Entity> {
         return executor.executeSelect(collectQuery, params, keyCollector);
     }
 
+    public List<Entity> selectEntitiesByNamedQuery(String queryName, Collection parameters) {
+        List transformedParameters = new LinkedList();
+        List<Integer> sizes = new LinkedList<>();
+        for (Object parameter : parameters) {
+            if (parameter instanceof Collection) {
+                Collection collectionParam = (Collection) parameter;
+                transformedParameters.addAll(collectionParam);
+                sizes.add(collectionParam.size());
+            } else {
+                transformedParameters.add(parameter);
+            }
+        }
+        String selectQuery = sizes.isEmpty() ? queryCache.getSelectNamedQuery(queryName)
+                : queryCache.getSelectNamedQuery(queryName, sizes);
+        return executor.executeSelect(selectQuery, transformedParameters, selector);
+    }
+
+    public List collectKeysByNamedQuery(String queryName, Collection parameters) {
+        List transformedParameters = new LinkedList();
+        List<Integer> sizes = new LinkedList<>();
+        for (Object parameter : parameters) {
+            if (parameter instanceof Collection) {
+                Collection collectionParam = (Collection) parameter;
+                transformedParameters.addAll(collectionParam);
+                sizes.add(collectionParam.size());
+            } else {
+                transformedParameters.add(parameter);
+            }
+        }
+        String collectQuery = sizes.isEmpty() ? queryCache.getSelectKeysNamedQuery(queryName)
+                : queryCache.getSelectKeysNamedQuery(queryName, sizes);
+        return executor.executeSelect(collectQuery, transformedParameters, keyCollector);
+    }
+
     public void pullCollection(Entity entity, String field) {
         String selectCollectionQuery = ((CollectionFieldQueryCache) queryCache
                 .getFieldQueryCache(field))
