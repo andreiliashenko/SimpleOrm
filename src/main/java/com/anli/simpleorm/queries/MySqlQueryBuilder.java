@@ -4,6 +4,7 @@ import com.anli.simpleorm.definitions.CollectionDefinition;
 import com.anli.simpleorm.definitions.EntityDefinition;
 import com.anli.simpleorm.definitions.FieldDefinition;
 import com.anli.simpleorm.definitions.ListDefinition;
+import com.anli.simpleorm.queries.named.NamedQuery;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -453,7 +454,21 @@ public class MySqlQueryBuilder {
         appendUnlinkCollectionWhereClauseTemplate(query, fieldDefinition, isEmpty);
         return query.toString();
     }
-
+    
+    public String buildSelectByNamedQuery(EntityDefinition definition, NamedQuery namedQuery, boolean full) {
+        StringBuilder query = new StringBuilder();
+        appendSelectFromClause(query, definition, full);
+        query.append(" ");
+        query.append(resolveListMacros(namedQuery.getAdditionalJoins()));
+        query.append(" ");
+        query.append(resolveListMacros(namedQuery.getCriteria()));
+        return query.toString();
+    }
+ 
+    protected String resolveListMacros(String clause) {
+        return clause.replace(NamedQuery.getListMacro(), "%s");
+    }
+    
     public Map<String, Integer> getKeysIndices(EntityDefinition definition) {
         Map<String, Integer> keyMap = new HashMap<>();
         int lastIndex = countSingleFields(definition.getParentEntity());

@@ -5,7 +5,7 @@ import com.anli.simpleorm.definitions.EntityDefinition;
 import com.anli.simpleorm.definitions.FieldDefinition;
 import com.anli.simpleorm.definitions.PrimitiveDefinition;
 import com.anli.simpleorm.definitions.PrimitiveType;
-import com.anli.simpleorm.definitions.ReferenceDefinition;
+import com.anli.simpleorm.queries.named.NamedQuery;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -28,10 +28,16 @@ public class EntityQueryCache {
 
     protected final Map<String, FieldQueryCache> fieldCaches;
 
+    protected final Map<String, String> selectNamedQueries;
+    
+    protected final Map<String, String> selectKeysNamedQueries;
+
     public EntityQueryCache(EntityDefinition definition, MySqlQueryBuilder queryBuilder) {
         this.definition = definition;
         this.queryBuilder = queryBuilder;
         this.fieldCaches = new HashMap<>();
+        this.selectNamedQueries = new HashMap<>();
+        this.selectKeysNamedQueries = new HashMap<>();
     }
 
     public List<String> getInsertQueries() {
@@ -98,6 +104,68 @@ public class EntityQueryCache {
         return cache;
     }
 
+    public String getSelectNamedQuery(String queryName) {
+        NamedQuery namedQuery = definition.getNamedQuery(queryName);
+        if (namedQuery.isTemplate()) {
+            return null;
+        }
+        String selectQuery = selectNamedQueries.get(queryName);
+        if (selectQuery == null) {
+            selectQuery = queryBuilder.buildSelectByNamedQuery(definition, namedQuery, true);
+            selectNamedQueries.put(queryName, selectQuery);
+        }
+        return selectQuery;
+    }
+ 
+    public String getSelectKeysNamedQuery(String queryName) {
+        NamedQuery namedQuery = definition.getNamedQuery(queryName);
+        if (namedQuery.isTemplate()) {
+            return null;
+        }
+        String selectQuery = selectKeysNamedQueries.get(queryName);
+        if (selectQuery == null) {
+            selectQuery = queryBuilder.buildSelectByNamedQuery(definition, namedQuery, false);
+            selectKeysNamedQueries.put(queryName, selectQuery);
+        }
+        return selectQuery;
+    }
+    
+    public String getSelectNamedQuery(String queryName, List<Integer> sizes) {
+        NamedQuery namedQuery = definition.getNamedQuery(queryName);
+        if (!namedQuery.isTemplate()) {
+            return null;
+        }
+        String selectQuery = selectNamedQueries.get(queryName);
+        if (selectQuery == null) {
+            selectQuery = queryBuilder.buildSelectByNamedQuery(definition, namedQuery, true);
+            selectNamedQueries.put(queryName, selectQuery);
+        }
+        String[] lists = new String[namedQuery.getMacroCount()];
+        int count = 0;
+        for(Integer size : sizes) {
+            lists[count] = queryBuilder.buildParametersList(size);
+        }
+        return String.format(selectQuery, (Object[]) lists);
+    }
+    
+    public String getSelectKeysNamedQuery(String queryName, List<Integer> sizes) {
+        NamedQuery namedQuery = definition.getNamedQuery(queryName);
+        if (!namedQuery.isTemplate()) {
+            return null;
+        }
+        String selectQuery = selectKeysNamedQueries.get(queryName);
+        if (selectQuery == null) {
+            selectQuery = queryBuilder.buildSelectByNamedQuery(definition, namedQuery, false);
+            selectKeysNamedQueries.put(queryName, selectQuery);
+        }
+        String[] lists = new String[namedQuery.getMacroCount()];
+        int count = 0;
+        for(Integer size : sizes) {
+            lists[count] = queryBuilder.buildParametersList(size);
+        }
+        return String.format(selectQuery, (Object[]) lists);
+    }
+    
     protected FieldQueryCache createFieldQueryCache(EntityDefinition fieldEntityDefinition,
             FieldDefinition fieldDefinition) {
         if (fieldDefinition instanceof CollectionDefinition) {
