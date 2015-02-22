@@ -29,7 +29,7 @@ public class EntityQueryCache {
     protected final Map<String, FieldQueryCache> fieldCaches;
 
     protected final Map<String, String> selectNamedQueries;
-    
+
     protected final Map<String, String> selectKeysNamedQueries;
 
     public EntityQueryCache(EntityDefinition definition, MySqlQueryBuilder queryBuilder) {
@@ -116,7 +116,7 @@ public class EntityQueryCache {
         }
         return selectQuery;
     }
- 
+
     public String getSelectKeysNamedQuery(String queryName) {
         NamedQuery namedQuery = definition.getNamedQuery(queryName);
         if (namedQuery.isTemplate()) {
@@ -129,7 +129,7 @@ public class EntityQueryCache {
         }
         return selectQuery;
     }
-    
+
     public String getSelectNamedQuery(String queryName, List<Integer> sizes) {
         NamedQuery namedQuery = definition.getNamedQuery(queryName);
         if (!namedQuery.isTemplate()) {
@@ -142,12 +142,13 @@ public class EntityQueryCache {
         }
         String[] lists = new String[namedQuery.getMacroCount()];
         int count = 0;
-        for(Integer size : sizes) {
+        for (Integer size : sizes) {
             lists[count] = queryBuilder.buildParametersList(size);
+            count++;
         }
         return String.format(selectQuery, (Object[]) lists);
     }
-    
+
     public String getSelectKeysNamedQuery(String queryName, List<Integer> sizes) {
         NamedQuery namedQuery = definition.getNamedQuery(queryName);
         if (!namedQuery.isTemplate()) {
@@ -160,12 +161,13 @@ public class EntityQueryCache {
         }
         String[] lists = new String[namedQuery.getMacroCount()];
         int count = 0;
-        for(Integer size : sizes) {
+        for (Integer size : sizes) {
             lists[count] = queryBuilder.buildParametersList(size);
+            count++;
         }
         return String.format(selectQuery, (Object[]) lists);
     }
-    
+
     protected FieldQueryCache createFieldQueryCache(EntityDefinition fieldEntityDefinition,
             FieldDefinition fieldDefinition) {
         if (fieldDefinition instanceof CollectionDefinition) {

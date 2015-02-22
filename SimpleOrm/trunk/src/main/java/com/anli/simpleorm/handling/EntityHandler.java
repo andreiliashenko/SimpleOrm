@@ -196,13 +196,15 @@ public class EntityHandler<Entity> {
     public List<Entity> selectEntitiesByNamedQuery(String queryName, Collection parameters) {
         List transformedParameters = new LinkedList();
         List<Integer> sizes = new LinkedList<>();
-        for (Object parameter : parameters) {
-            if (parameter instanceof Collection) {
-                Collection collectionParam = (Collection) parameter;
-                transformedParameters.addAll(collectionParam);
-                sizes.add(collectionParam.size());
-            } else {
-                transformedParameters.add(parameter);
+        if (parameters != null) {
+            for (Object parameter : parameters) {
+                if (parameter instanceof Collection) {
+                    Collection collectionParam = (Collection) parameter;
+                    transformedParameters.addAll(collectionParam);
+                    sizes.add(collectionParam.size());
+                } else {
+                    transformedParameters.add(parameter);
+                }
             }
         }
         String selectQuery = sizes.isEmpty() ? queryCache.getSelectNamedQuery(queryName)
@@ -213,13 +215,15 @@ public class EntityHandler<Entity> {
     public List collectKeysByNamedQuery(String queryName, Collection parameters) {
         List transformedParameters = new LinkedList();
         List<Integer> sizes = new LinkedList<>();
-        for (Object parameter : parameters) {
-            if (parameter instanceof Collection) {
-                Collection collectionParam = (Collection) parameter;
-                transformedParameters.addAll(collectionParam);
-                sizes.add(collectionParam.size());
-            } else {
-                transformedParameters.add(parameter);
+        if (parameters != null) {
+            for (Object parameter : parameters) {
+                if (parameter instanceof Collection) {
+                    Collection collectionParam = (Collection) parameter;
+                    transformedParameters.addAll(collectionParam);
+                    sizes.add(collectionParam.size());
+                } else {
+                    transformedParameters.add(parameter);
+                }
             }
         }
         String collectQuery = sizes.isEmpty() ? queryCache.getSelectKeysNamedQuery(queryName)
