@@ -396,8 +396,8 @@ public class EntityHandler<Entity> {
         String collectionName = field.getReferencedEntity().getName();
         String fieldName = field.getName();
         Collection keys = gateway.extractCollectionKeys(entity, entityName, fieldName);
-        Set inconsistentKeys = new HashSet(keys);
         if (keys != null) {
+            Set inconsistentKeys = new HashSet(keys);
             EntityHandler collectionHandler = handlerFactory.getHandler(collectionName);
             inconsistentKeys.removeAll(collectionHandler.selectKeysByKeyList(keys));
             inconsistent.addAll(gateway.extractCollectionByKeys(entity, entityName, fieldName,
