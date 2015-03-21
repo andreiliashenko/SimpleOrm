@@ -8,6 +8,7 @@ public class ComparableFieldQueryCache extends SingleFieldQueryCache {
     protected static final String GREATER = ">";
     protected static final String LESS = "<";
     protected static final String EQUALS = "=";
+
     protected String selectFullByOpenRangeTemplate;
     protected String selectKeysByOpenRangeTemplate;
     protected String selectFullByClosedRangeTemplate;

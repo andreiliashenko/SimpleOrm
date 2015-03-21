@@ -45,8 +45,7 @@ public class EntityQueryCache {
             LinkedList<String> tempQueries = new LinkedList<>();
             EntityDefinition currentDefinition = definition;
             while (currentDefinition != null) {
-                tempQueries
-                        .addFirst(queryBuilder.buildInsertEntityQuery(currentDefinition));
+                tempQueries.addFirst(queryBuilder.buildInsertEntityQuery(currentDefinition));
                 currentDefinition = currentDefinition.getParentEntity();
             }
             insertQueries = new ArrayList<>(tempQueries);
@@ -187,5 +186,4 @@ public class EntityQueryCache {
         }
         return new SingleFieldQueryCache(definition, fieldEntityDefinition, fieldDefinition, queryBuilder);
     }
-
 }

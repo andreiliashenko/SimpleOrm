@@ -12,11 +12,11 @@ public class EntityDefinition {
 
     protected String primaryKeyName;
     protected final String name;
-    protected final SortedMap<String, FieldDefinition> singleFields;
-    protected final SortedMap<String, CollectionDefinition> collectionFields;
     protected String table;
     protected EntityDefinition parentEntity;
     protected final List<EntityDefinition> childrenEntities;
+    protected final SortedMap<String, FieldDefinition> singleFields;
+    protected final SortedMap<String, CollectionDefinition> collectionFields;
     protected final Map<String, NamedQuery> namedQueries;
 
     public EntityDefinition(String name) {

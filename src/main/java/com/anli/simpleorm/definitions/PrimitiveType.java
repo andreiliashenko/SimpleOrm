@@ -24,5 +24,4 @@ public enum PrimitiveType {
     public boolean isCharacter() {
         return character;
     }
-
 }

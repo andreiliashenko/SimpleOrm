@@ -10,7 +10,7 @@ import java.util.Map;
 
 public class MySqlQueryBuilder {
 
-    protected final String ORDERING_SUBQUERY_ALIAS = "ordering_subquery";
+    protected static final String ORDERING_SUBQUERY_ALIAS = "ordering_subquery";
 
     protected void appendSelectFromClause(StringBuilder query, EntityDefinition definition, boolean full) {
         appendSelectClause(query, definition, full);
@@ -82,7 +82,7 @@ public class MySqlQueryBuilder {
         appendFullFromClause(query, definition);
     }
 
-    protected void appendTableListDelete(StringBuilder query, EntityDefinition definition, 
+    protected void appendTableListDelete(StringBuilder query, EntityDefinition definition,
             boolean withChildren, boolean withParent) {
         EntityDefinition parent = definition.getParentEntity();
         if (parent != null && withParent) {
@@ -98,7 +98,7 @@ public class MySqlQueryBuilder {
             appendTableListDelete(query, child, true, false);
         }
     }
-    
+
     protected void appendJoinClauses(StringBuilder query, EntityDefinition definition,
             boolean withChildren, boolean withParent) {
         EntityDefinition parentDefinition = definition.getParentEntity();
@@ -260,7 +260,7 @@ public class MySqlQueryBuilder {
     protected void appendWhereEqualsClause(StringBuilder query, EntityDefinition definition,
             FieldDefinition field) {
         String name = (field instanceof CollectionDefinition)
-                ? field.getName().toLowerCase() 
+                ? field.getName().toLowerCase()
                 + ((CollectionDefinition) field).getReferencedEntity().getName().toLowerCase()
                 : definition.getName().toLowerCase();
         query.append("where ").append(name).append(".").append(field.getColumn())
@@ -454,7 +454,7 @@ public class MySqlQueryBuilder {
         appendUnlinkCollectionWhereClauseTemplate(query, fieldDefinition, isEmpty);
         return query.toString();
     }
-    
+
     public String buildSelectByNamedQuery(EntityDefinition definition, NamedQuery namedQuery, boolean full) {
         StringBuilder query = new StringBuilder();
         appendSelectFromClause(query, definition, full);
@@ -464,11 +464,11 @@ public class MySqlQueryBuilder {
         query.append(resolveListMacros(namedQuery.getCriteria()));
         return query.toString();
     }
- 
+
     protected String resolveListMacros(String clause) {
         return clause.replace(NamedQuery.getListMacro(), "%s");
     }
-    
+
     public Map<String, Integer> getKeysIndices(EntityDefinition definition) {
         Map<String, Integer> keyMap = new HashMap<>();
         int lastIndex = countSingleFields(definition.getParentEntity());
