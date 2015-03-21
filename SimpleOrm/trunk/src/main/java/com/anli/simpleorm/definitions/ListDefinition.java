@@ -4,7 +4,8 @@ public class ListDefinition extends CollectionDefinition {
 
     protected String orderColumn;
 
-    public ListDefinition(String name, Class<?> javaClass, String foreignKeyColumn, EntityDefinition referencedEntity, String orderColumn) {
+    public ListDefinition(String name, Class<?> javaClass, String foreignKeyColumn,
+            EntityDefinition referencedEntity, String orderColumn) {
         super(name, javaClass, foreignKeyColumn, referencedEntity);
         this.orderColumn = orderColumn;
     }

@@ -39,8 +39,8 @@ public class EntityHandler<Entity> {
     protected final EntitySelector selector;
     protected final KeyCollector keyCollector;
 
-    public EntityHandler(EntityDefinition definition, MySqlQueryBuilder queryBuilder, EntityGateway<Entity> gateway,
-            EntityHandlerFactory handlerFactory, SqlExecutor executor) {
+    public EntityHandler(EntityDefinition definition, MySqlQueryBuilder queryBuilder,
+            EntityGateway<Entity> gateway, EntityHandlerFactory handlerFactory, SqlExecutor executor) {
         this.definition = definition;
         this.queryCache = new EntityQueryCache(definition, queryBuilder);
         this.gateway = gateway;
@@ -311,7 +311,8 @@ public class EntityHandler<Entity> {
         }
     }
 
-    protected void updateCollectionLink(EntityDefinition entityDefinition, Entity entity, String fieldName) {
+    protected void updateCollectionLink(EntityDefinition entityDefinition, Entity entity,
+            String fieldName) {
         String entityName = entityDefinition.getName();
         Collection collectionKeys = gateway.extractCollectionKeys(entity, entityName, fieldName);
         Object primaryKey = getPrimaryKey(entity);
@@ -353,8 +354,8 @@ public class EntityHandler<Entity> {
         }
     }
 
-    protected void checkReferencesConsistency(List inconsistent, EntityDefinition entityDefinition, Entity entity,
-            boolean withChildren, boolean withParent) {
+    protected void checkReferencesConsistency(List inconsistent, EntityDefinition entityDefinition,
+            Entity entity, boolean withChildren, boolean withParent) {
         EntityDefinition parentDefinition = entityDefinition.getParentEntity();
         if (parentDefinition != null && withParent) {
             checkReferencesConsistency(inconsistent, parentDefinition, entity,
@@ -378,8 +379,8 @@ public class EntityHandler<Entity> {
         }
     }
 
-    protected void checkReferenceConsistency(ReferenceDefinition field, Entity entity, String entityName,
-            List inconsistent) {
+    protected void checkReferenceConsistency(ReferenceDefinition field, Entity entity,
+            String entityName, List inconsistent) {
         String referenceName = field.getReferencedEntity().getName();
         String fieldName = field.getName();
         Object key = gateway.extractSingle(entity, entityName, fieldName);
@@ -391,8 +392,8 @@ public class EntityHandler<Entity> {
         }
     }
 
-    protected void checkCollectionConsistency(CollectionDefinition field, Entity entity, String entityName,
-            List inconsistent) {
+    protected void checkCollectionConsistency(CollectionDefinition field, Entity entity,
+            String entityName, List inconsistent) {
         String collectionName = field.getReferencedEntity().getName();
         String fieldName = field.getName();
         Collection keys = gateway.extractCollectionKeys(entity, entityName, fieldName);
