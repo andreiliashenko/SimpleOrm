@@ -29,16 +29,16 @@ import java.util.Map;
 import java.util.Set;
 
 public class EntityHandler<Entity> {
-
+    
     protected final EntityDefinition definition;
     protected final EntityQueryCache queryCache;
     protected final EntityGateway<Entity> gateway;
     protected final EntityHandlerFactory handlerFactory;
     protected final SqlExecutor executor;
-
+    
     protected final EntitySelector selector;
     protected final KeyCollector keyCollector;
-
+    
     public EntityHandler(EntityDefinition definition, MySqlQueryBuilder queryBuilder,
             EntityGateway<Entity> gateway, EntityHandlerFactory handlerFactory, SqlExecutor executor) {
         this.definition = definition;
@@ -49,7 +49,7 @@ public class EntityHandler<Entity> {
         this.selector = new EntitySelector();
         this.keyCollector = new KeyCollector();
     }
-
+    
     public Entity insertEntity(Object primaryKey) {
         EntityBuilder<Entity> builder = gateway.getBuilder(definition.getName()).startBuilding();
         List<String> insertQueries = queryCache.getInsertQueries();
@@ -57,33 +57,33 @@ public class EntityHandler<Entity> {
         insertSingle(definition, builder, queryIterator, primaryKey);
         return builder.build();
     }
-
+    
     public Entity selectEntity(Object primaryKey) {
         String selectQuery = queryCache.getSelectQuery();
         List<Entity> found = executor.executeSelect(selectQuery, Arrays.asList(primaryKey), selector);
         return found.isEmpty() ? null : found.iterator().next();
     }
-
+    
     public boolean isKeyPresent(Object primaryKey) {
         return !collectKeysByEqualsOrContains(definition.getPrimaryKey().getName(),
                 primaryKey).isEmpty();
     }
-
+    
     protected List selectKeysByKeyList(Collection keys) {
         return collectKeysByAny(definition.getPrimaryKey().getName(),
                 new ArrayList(keys));
     }
-
+    
     public List<Entity> selectAllEntities() {
         String selectQuery = queryCache.getSelectAllQuery();
         return executor.executeSelect(selectQuery, Collections.emptyList(), selector);
     }
-
+    
     public List collectAllKeys() {
         String collectQuery = queryCache.getSelectAllKeysQuery();
         return executor.executeSelect(collectQuery, Collections.emptyList(), keyCollector);
     }
-
+    
     public List<Entity> selectEntitiesByEqualsOrContains(String field, Object value) {
         FieldQueryCache cache = queryCache.getFieldQueryCache(field);
         String selectQuery;
@@ -100,7 +100,7 @@ public class EntityHandler<Entity> {
         }
         return executor.executeSelect(selectQuery, parameters, selector);
     }
-
+    
     public List collectKeysByEqualsOrContains(String field, Object value) {
         FieldQueryCache cache = queryCache.getFieldQueryCache(field);
         String collectQuery;
@@ -117,7 +117,7 @@ public class EntityHandler<Entity> {
         }
         return executor.executeSelect(collectQuery, parameters, keyCollector);
     }
-
+    
     public List<Entity> selectEntitiesByAny(String field, Collection values) {
         if (values == null || values.isEmpty()) {
             return Collections.emptyList();
@@ -128,7 +128,7 @@ public class EntityHandler<Entity> {
                 getParameterList(definition.getFieldEntity(field).getField(field), values),
                 selector);
     }
-
+    
     public List collectKeysByAny(String field, Collection values) {
         if (values == null || values.isEmpty()) {
             return Collections.emptyList();
@@ -138,19 +138,19 @@ public class EntityHandler<Entity> {
         return executor.executeSelect(collectQuery,
                 getParameterList(definition.getFieldEntity(field).getField(field), values), keyCollector);
     }
-
+    
     public List<Entity> selectEntitiesByRegexp(String field, String regexp) {
         String selectQuery = ((CharacterFieldQueryCache) queryCache.getFieldQueryCache(field))
                 .getSelectFullByRegexpQuery();
         return executor.executeSelect(selectQuery, Arrays.asList(regexp), selector);
     }
-
+    
     public List collectKeysByRegexp(String field, String regexp) {
         String collectQuery = ((CharacterFieldQueryCache) queryCache.getFieldQueryCache(field))
                 .getSelectKeysByRegexpQuery();
         return executor.executeSelect(collectQuery, Arrays.asList(regexp), keyCollector);
     }
-
+    
     public List<Entity> selectEntitiesByRange(String field, Object left, boolean leftStrict,
             Object right, boolean rightStrict) {
         if (left == null && right == null) {
@@ -158,8 +158,8 @@ public class EntityHandler<Entity> {
         }
         String selectQuery;
         List params;
-        ComparableFieldQueryCache cache
-                = (ComparableFieldQueryCache) queryCache.getFieldQueryCache(field);
+        ComparableFieldQueryCache cache =
+                 (ComparableFieldQueryCache) queryCache.getFieldQueryCache(field);
         if (left != null && right != null) {
             selectQuery = cache.getSelectFullByClosedRangeQuery(leftStrict, rightStrict);
             params = Arrays.asList(left, right);
@@ -171,7 +171,7 @@ public class EntityHandler<Entity> {
         }
         return executor.executeSelect(selectQuery, params, selector);
     }
-
+    
     public List collectKeysByRange(String field, Object left, boolean leftStrict,
             Object right, boolean rightStrict) {
         if (left == null && right == null) {
@@ -179,8 +179,8 @@ public class EntityHandler<Entity> {
         }
         String collectQuery;
         List params;
-        ComparableFieldQueryCache cache
-                = (ComparableFieldQueryCache) queryCache.getFieldQueryCache(field);
+        ComparableFieldQueryCache cache =
+                 (ComparableFieldQueryCache) queryCache.getFieldQueryCache(field);
         if (left != null && right != null) {
             collectQuery = cache.getSelectKeysByClosedRangeQuery(leftStrict, rightStrict);
             params = Arrays.asList(left, right);
@@ -192,7 +192,7 @@ public class EntityHandler<Entity> {
         }
         return executor.executeSelect(collectQuery, params, keyCollector);
     }
-
+    
     public List<Entity> selectEntitiesByNamedQuery(String queryName, Collection parameters) {
         List transformedParameters = new LinkedList();
         List<Integer> sizes = new LinkedList<>();
@@ -211,7 +211,7 @@ public class EntityHandler<Entity> {
                 : queryCache.getSelectNamedQuery(queryName, sizes);
         return executor.executeSelect(selectQuery, transformedParameters, selector);
     }
-
+    
     public List collectKeysByNamedQuery(String queryName, Collection parameters) {
         List transformedParameters = new LinkedList();
         List<Integer> sizes = new LinkedList<>();
@@ -230,8 +230,9 @@ public class EntityHandler<Entity> {
                 : queryCache.getSelectKeysNamedQuery(queryName, sizes);
         return executor.executeSelect(collectQuery, transformedParameters, keyCollector);
     }
-
+    
     public void pullCollection(Entity entity, String field) {
+        checkEntityConsistency(entity);
         String selectCollectionQuery = ((CollectionFieldQueryCache) queryCache
                 .getFieldQueryCache(field))
                 .getSelectCollectionQuery();
@@ -244,7 +245,7 @@ public class EntityHandler<Entity> {
                 collectionHandler.selector);
         gateway.setCollectionField(entity, entityName, field, collection);
     }
-
+    
     public void updateEntity(Entity entity) {
         checkConsistency(entity);
         String updateSinglesQuery = queryCache.getUpdateQuery();
@@ -255,14 +256,14 @@ public class EntityHandler<Entity> {
         executor.executeUpdate(updateSinglesQuery, updateSinglesParameters);
         updateAllCollectionLinks(definition, entity, true, true);
     }
-
+    
     public void deleteEntity(Entity entity) {
         checkEntityConsistency(entity);
         String deleteQuery = queryCache.getDeleteQuery();
         Object primaryKey = getPrimaryKey(entity);
         executor.executeUpdate(deleteQuery, Arrays.asList(primaryKey));
     }
-
+    
     protected void insertSingle(EntityDefinition currentDefinition, EntityBuilder<Entity> builder,
             ListIterator<String> queryIter, Object primaryKey) {
         String query = queryIter.previous();
@@ -274,7 +275,7 @@ public class EntityHandler<Entity> {
                 currentDefinition.getPrimaryKey().getName(), primaryKey);
         executor.executeUpdate(query, Arrays.asList(primaryKey));
     }
-
+    
     protected void addUpdateParameters(EntityDefinition currentDefinition,
             List parameters, Entity entity, boolean withChildren, boolean withParent) {
         EntityDefinition parentDefinition = currentDefinition.getParentEntity();
@@ -293,7 +294,7 @@ public class EntityHandler<Entity> {
             addUpdateParameters(childDefinition, parameters, entity, true, false);
         }
     }
-
+    
     protected void updateAllCollectionLinks(EntityDefinition entityDefinition, Entity entity,
             boolean withChildren, boolean withParent) {
         EntityDefinition parentDefinition = entityDefinition.getParentEntity();
@@ -310,7 +311,7 @@ public class EntityHandler<Entity> {
             updateAllCollectionLinks(childDefinition, entity, true, false);
         }
     }
-
+    
     protected void updateCollectionLink(EntityDefinition entityDefinition, Entity entity,
             String fieldName) {
         String entityName = entityDefinition.getName();
@@ -319,12 +320,12 @@ public class EntityHandler<Entity> {
         if (collectionKeys == null) {
             return;
         }
-        CollectionFieldQueryCache fieldQueryCache
-                = (CollectionFieldQueryCache) queryCache.getFieldQueryCache(fieldName);
+        CollectionFieldQueryCache fieldQueryCache =
+                 (CollectionFieldQueryCache) queryCache.getFieldQueryCache(fieldName);
         int size = collectionKeys.size();
         int paramSize = size + 1;
         if (!collectionKeys.isEmpty()) {
-
+            
             String linkQuery = fieldQueryCache.getLinkCollectionQuery(size);
             List linkParamList = new ArrayList(paramSize);
             linkParamList.addAll(collectionKeys);
@@ -337,7 +338,7 @@ public class EntityHandler<Entity> {
         unlinkParamList.addAll(collectionKeys);
         executor.executeUpdate(unlinkQuery, unlinkParamList);
     }
-
+    
     protected void checkConsistency(Entity entity) {
         checkEntityConsistency(entity);
         List inconsistentEntities = new LinkedList();
@@ -346,14 +347,14 @@ public class EntityHandler<Entity> {
             throw new NonExistentEntitiesException(inconsistentEntities);
         }
     }
-
+    
     protected void checkEntityConsistency(Entity entity) {
         Object primaryKey = getPrimaryKey(entity);
         if (!isKeyPresent(primaryKey)) {
             throw new NonExistentEntitiesException(Arrays.asList(entity));
         }
     }
-
+    
     protected void checkReferencesConsistency(List inconsistent, EntityDefinition entityDefinition,
             Entity entity, boolean withChildren, boolean withParent) {
         EntityDefinition parentDefinition = entityDefinition.getParentEntity();
@@ -378,7 +379,7 @@ public class EntityHandler<Entity> {
             checkReferencesConsistency(inconsistent, childDefinition, entity, false, true);
         }
     }
-
+    
     protected void checkReferenceConsistency(ReferenceDefinition field, Entity entity,
             String entityName, List inconsistent) {
         String referenceName = field.getReferencedEntity().getName();
@@ -391,7 +392,7 @@ public class EntityHandler<Entity> {
             }
         }
     }
-
+    
     protected void checkCollectionConsistency(CollectionDefinition field, Entity entity,
             String entityName, List inconsistent) {
         String collectionName = field.getReferencedEntity().getName();
@@ -405,12 +406,12 @@ public class EntityHandler<Entity> {
                     inconsistentKeys));
         }
     }
-
+    
     protected Object getPrimaryKey(Entity entity) {
         return gateway.extractSingle(entity, definition.getName(),
                 definition.getPrimaryKey().getName());
     }
-
+    
     protected Object getParameter(FieldDefinition field, Object value) {
         if (field instanceof ReferenceDefinition) {
             return handlerFactory.getHandler(((ReferenceDefinition) field).getReferencedEntity()
@@ -418,10 +419,11 @@ public class EntityHandler<Entity> {
         }
         return value;
     }
-
+    
     protected List getParameterList(FieldDefinition field, Collection values) {
         if (field instanceof ReferenceDefinition) {
-            EntityHandler handler = handlerFactory.getHandler(((ReferenceDefinition) field).getReferencedEntity()
+            EntityHandler handler = handlerFactory.getHandler(((ReferenceDefinition) field)
+                    .getReferencedEntity()
                     .getName());
             ArrayList keys = new ArrayList(values.size());
             for (Object value : values) {
@@ -431,9 +433,9 @@ public class EntityHandler<Entity> {
         }
         return new ArrayList(values);
     }
-
+    
     protected class EntitySelector implements ResultSetHandler<List<Entity>> {
-
+        
         @Override
         public List<Entity> handle(TransformingResultSet resultSet) throws SQLException {
             List<Entity> entities = new LinkedList<>();
@@ -443,7 +445,7 @@ public class EntityHandler<Entity> {
             }
             return entities;
         }
-
+        
         protected Entity getEntity(TransformingResultSet resultSet,
                 Map<String, Map> referencedEntities) throws SQLException {
             String actualEntity = getActualEntityName(resultSet, definition, queryCache.getKeysIndices());
@@ -452,7 +454,7 @@ public class EntityHandler<Entity> {
                     0, true, true);
             return builder.build();
         }
-
+        
         protected String getActualEntityName(TransformingResultSet resultSet,
                 EntityDefinition currentDefinition, Map<String, Integer> indices) throws SQLException {
             for (EntityDefinition child : currentDefinition.getChildrenEntities()) {
@@ -466,7 +468,7 @@ public class EntityHandler<Entity> {
             Object key = resultSet.getValue(index, currentDefinition.getPrimaryKey().getJavaClass());
             return key != null ? name : null;
         }
-
+        
         protected int populateEntity(EntityDefinition entityDefinition, TransformingResultSet resultSet,
                 EntityBuilder builder, Map<String, Map> referencedEntities, int lastIndex,
                 boolean withChildren, boolean withParent) throws SQLException {
@@ -480,7 +482,8 @@ public class EntityHandler<Entity> {
                 lastIndex++;
                 Object value = resultSet.getValue(lastIndex, fieldDefinition.getJavaClass());
                 if (fieldDefinition instanceof ReferenceDefinition) {
-                    String referenceName = ((ReferenceDefinition) fieldDefinition).getReferencedEntity().getName();
+                    String referenceName = ((ReferenceDefinition) fieldDefinition).getReferencedEntity()
+                            .getName();
                     value = getReference(referencedEntities, referenceName, value);
                 }
                 builder.setSingle(entityName, fieldDefinition.getName(), value);
@@ -494,7 +497,7 @@ public class EntityHandler<Entity> {
             }
             return lastIndex;
         }
-
+        
         protected Object getReference(Map<String, Map> map, String entityName, Object key) {
             if (key == null) {
                 return null;
@@ -510,15 +513,15 @@ public class EntityHandler<Entity> {
             }
             return entity;
         }
-
+        
         protected Object pullReference(String entityName, Object key) {
             EntityHandler handler = handlerFactory.getHandler(entityName);
             return handler.selectEntity(key);
         }
     }
-
+    
     protected class KeyCollector implements ResultSetHandler<List> {
-
+        
         @Override
         public List handle(TransformingResultSet resultSet) throws SQLException {
             Class keyClass = definition.getPrimaryKey().getJavaClass();
