@@ -8,7 +8,7 @@ import com.anli.simpleorm.queries.named.NamedQuery;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MySqlQueryBuilder {
+public class MySqlQueryBuilder implements BasicQueryBuilder {
 
     protected static final String ORDERING_SUBQUERY_ALIAS = "ordering_subquery";
 
@@ -179,6 +179,7 @@ public class MySqlQueryBuilder {
         }
     }
 
+    @Override
     public String buildListOrderingSubquery(ListDefinition listField, int size) {
         String primaryKeyColumn = listField.getReferencedEntity().getPrimaryKey().getColumn();
         String orderingColumn = listField.getOrderColumn();
@@ -236,6 +237,7 @@ public class MySqlQueryBuilder {
         }
     }
 
+    @Override
     public String buildParametersList(int size) {
         StringBuilder list = new StringBuilder();
         boolean isCommaNeeded = false;
@@ -311,6 +313,7 @@ public class MySqlQueryBuilder {
         query.append(") values (?)");
     }
 
+    @Override
     public String buildUpdateEntityQuery(EntityDefinition definition) {
         StringBuilder query = new StringBuilder();
         appendFullUpdateClause(query, definition);
@@ -321,6 +324,7 @@ public class MySqlQueryBuilder {
         return query.toString();
     }
 
+    @Override
     public String buildDeleteEntityQuery(EntityDefinition definition) {
         StringBuilder query = new StringBuilder();
         appendFullDeleteClause(query, definition);
@@ -329,6 +333,7 @@ public class MySqlQueryBuilder {
         return query.toString();
     }
 
+    @Override
     public String buildInsertEntityQuery(EntityDefinition definition) {
         StringBuilder query = new StringBuilder();
         appendFullInsertClause(query, definition);
@@ -430,6 +435,7 @@ public class MySqlQueryBuilder {
         return query.toString();
     }
 
+    @Override
     public String buildLinkCollectionQueryTemplate(CollectionDefinition fieldDefinition) {
         StringBuilder query = new StringBuilder();
         if (fieldDefinition instanceof ListDefinition) {
@@ -469,6 +475,7 @@ public class MySqlQueryBuilder {
         return clause.replace(NamedQuery.getListMacro(), "%s");
     }
 
+    @Override
     public Map<String, Integer> getKeysIndices(EntityDefinition definition) {
         Map<String, Integer> keyMap = new HashMap<>();
         int lastIndex = countSingleFields(definition.getParentEntity());

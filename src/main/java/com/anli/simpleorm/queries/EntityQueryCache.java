@@ -72,6 +72,11 @@ public class EntityQueryCache {
                 .getSelectFullByEqualsOrContainsQuery();
     }
 
+    public String getSelectKeyQuery() {
+        return getFieldQueryCache(definition.getPrimaryKey().getName())
+                .getSelectFullByEqualsOrContainsQuery();
+    }
+
     public String getSelectAllQuery() {
         if (selectAllQuery == null) {
             selectAllQuery = queryBuilder.buildSelectAllEntities(definition, true);
