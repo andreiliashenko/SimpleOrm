@@ -4,9 +4,9 @@ public class ListDefinition extends CollectionDefinition {
 
     protected String orderColumn;
 
-    public ListDefinition(String name, Class<?> javaClass, String foreignKeyColumn,
-            EntityDefinition referencedEntity, String orderColumn) {
-        super(name, javaClass, foreignKeyColumn, referencedEntity);
+    public ListDefinition(String name, String foreignKeyColumn,
+            EntityDefinition referencedEntity, String orderColumn, boolean lazy) {
+        super(name, foreignKeyColumn, referencedEntity, lazy);
         this.orderColumn = orderColumn;
     }
 

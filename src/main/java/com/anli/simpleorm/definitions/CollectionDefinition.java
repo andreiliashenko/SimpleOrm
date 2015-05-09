@@ -2,9 +2,9 @@ package com.anli.simpleorm.definitions;
 
 public class CollectionDefinition extends ReferenceDefinition {
 
-    public CollectionDefinition(String name, Class<?> javaClass, String foreignKeyColumn,
-            EntityDefinition referencedEntity) {
-        super(name, javaClass, foreignKeyColumn, referencedEntity);
+    public CollectionDefinition(String name, String foreignKeyColumn,
+            EntityDefinition referencedEntity, boolean lazy) {
+        super(name, foreignKeyColumn, referencedEntity, lazy);
     }
 
     @Override

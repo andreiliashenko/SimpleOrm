@@ -1,16 +1,16 @@
 package com.anli.simpleorm.handling;
-
+/*
 import com.anli.simpleorm.definitions.CollectionDefinition;
 import com.anli.simpleorm.definitions.EntityDefinition;
 import com.anli.simpleorm.definitions.FieldDefinition;
 import com.anli.simpleorm.definitions.ReferenceDefinition;
 import com.anli.simpleorm.exceptions.NonExistentEntitiesException;
 import com.anli.simpleorm.queries.CharacterFieldQueryCache;
-import com.anli.simpleorm.queries.CollectionFieldQueryCache;
+import com.anli.simpleorm.queries.CollectionFieldQueryHolder;
 import com.anli.simpleorm.queries.ComparableFieldQueryCache;
-import com.anli.simpleorm.queries.EntityQueryCache;
+import com.anli.simpleorm.queries.EntityQueryHolder;
 import com.anli.simpleorm.queries.FieldQueryCache;
-import com.anli.simpleorm.queries.MySqlQueryBuilder;
+import com.anli.simpleorm.queries.mysql.MySqlQueryBuilder;
 import com.anli.simpleorm.queries.SingleFieldQueryCache;
 import com.anli.sqlexecution.execution.SqlExecutor;
 import com.anli.sqlexecution.handling.ResultSetHandler;
@@ -27,11 +27,11 @@ import java.util.List;
 import java.util.ListIterator;
 import java.util.Map;
 import java.util.Set;
-
+*/
 public class EntityHandler<Entity> {
-    
+    /*
     protected final EntityDefinition definition;
-    protected final EntityQueryCache queryCache;
+    protected final EntityQueryHolder queryCache;
     protected final EntityGateway<Entity> gateway;
     protected final EntityHandlerFactory handlerFactory;
     protected final SqlExecutor executor;
@@ -42,7 +42,7 @@ public class EntityHandler<Entity> {
     public EntityHandler(EntityDefinition definition, MySqlQueryBuilder queryBuilder,
             EntityGateway<Entity> gateway, EntityHandlerFactory handlerFactory, SqlExecutor executor) {
         this.definition = definition;
-        this.queryCache = new EntityQueryCache(definition, queryBuilder);
+        this.queryCache = new EntityQueryHolder(definition, queryBuilder);
         this.gateway = gateway;
         this.executor = executor;
         this.handlerFactory = handlerFactory;
@@ -92,7 +92,7 @@ public class EntityHandler<Entity> {
             selectQuery = cache.getSelectFullByEqualsOrContainsQuery();
             parameters = Arrays.asList(getParameter(definition.getFieldEntity(field)
                     .getField(field), value));
-        } else if (cache instanceof CollectionFieldQueryCache) {
+        } else if (cache instanceof CollectionFieldQueryHolder) {
             return Collections.emptyList();
         } else {
             selectQuery = ((SingleFieldQueryCache) cache).getSelectFullByIsNullQuery();
@@ -109,7 +109,7 @@ public class EntityHandler<Entity> {
             collectQuery = cache.getSelectKeysByEqualsOrContainsQuery();
             parameters = Arrays.asList(getParameter(definition.getFieldEntity(field)
                     .getField(field), value));
-        } else if (cache instanceof CollectionFieldQueryCache) {
+        } else if (cache instanceof CollectionFieldQueryHolder) {
             return Collections.emptyList();
         } else {
             collectQuery = ((SingleFieldQueryCache) cache).getSelectKeysByIsNullQuery();
@@ -233,7 +233,7 @@ public class EntityHandler<Entity> {
     
     public void pullCollection(Entity entity, String field) {
         checkEntityConsistency(entity);
-        String selectCollectionQuery = ((CollectionFieldQueryCache) queryCache
+        String selectCollectionQuery = ((CollectionFieldQueryHolder) queryCache
                 .getFieldQueryCache(field))
                 .getSelectCollectionQuery();
         String entityName = definition.getName();
@@ -320,8 +320,8 @@ public class EntityHandler<Entity> {
         if (collectionKeys == null) {
             return;
         }
-        CollectionFieldQueryCache fieldQueryCache =
-                 (CollectionFieldQueryCache) queryCache.getFieldQueryCache(fieldName);
+        CollectionFieldQueryHolder fieldQueryCache =
+                 (CollectionFieldQueryHolder) queryCache.getFieldQueryCache(fieldName);
         int size = collectionKeys.size();
         int paramSize = size + 1;
         if (!collectionKeys.isEmpty()) {
@@ -532,4 +532,5 @@ public class EntityHandler<Entity> {
             return keys;
         }
     }
+    */
 }

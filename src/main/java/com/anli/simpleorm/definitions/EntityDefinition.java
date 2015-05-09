@@ -1,32 +1,34 @@
 package com.anli.simpleorm.definitions;
 
-import com.anli.simpleorm.queries.named.NamedQuery;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.SortedMap;
-import java.util.TreeMap;
 
 public class EntityDefinition {
 
+    protected final Class entityClass;
     protected String primaryKeyName;
     protected final String name;
     protected String table;
-    protected EntityDefinition parentEntity;
-    protected final List<EntityDefinition> childrenEntities;
-    protected final SortedMap<String, FieldDefinition> singleFields;
-    protected final SortedMap<String, CollectionDefinition> collectionFields;
-    protected final Map<String, NamedQuery> namedQueries;
+    protected EntityDefinition parentDefinition;
+    protected final List<EntityDefinition> childrenDefinitions;
+    protected final Map<String, FieldDefinition> singleFields;
+    protected final Map<String, CollectionDefinition> collectionFields;
 
-    public EntityDefinition(String name) {
+    public EntityDefinition(Class entityClass, String name) {
+        this.entityClass = entityClass;
         this.name = name;
-        this.singleFields = new TreeMap<>();
-        this.collectionFields = new TreeMap<>();
-        this.childrenEntities = new LinkedList<>();
-        this.namedQueries = new TreeMap<>();
+        this.singleFields = new HashMap<>();
+        this.collectionFields = new HashMap<>();
+        this.childrenDefinitions = new LinkedList<>();
     }
 
+    public Class getEntityClass() {
+        return entityClass;
+    }
+    
     public void setPrimaryKeyName(String primaryKeyName) {
         this.primaryKeyName = primaryKeyName;
     }
@@ -71,33 +73,17 @@ public class EntityDefinition {
         return table;
     }
 
-    public EntityDefinition getParentEntity() {
-        return parentEntity;
+    public EntityDefinition getParentDefinition() {
+        return parentDefinition;
     }
 
-    public List<EntityDefinition> getChildrenEntities() {
-        return childrenEntities;
+    public List<EntityDefinition> getChildrenDefinitions() {
+        return childrenDefinitions;
     }
 
     public void addChildrenEntity(EntityDefinition childrenEntity) {
-        this.childrenEntities.add(childrenEntity);
-        childrenEntity.parentEntity = this;
-    }
-
-    public void addNamedQuery(NamedQuery query) {
-        this.namedQueries.put(query.getName(), query);
-    }
-
-    public NamedQuery getNamedQuery(String queryName) {
-        EntityDefinition currentEntity = this;
-        while (currentEntity != null) {
-            NamedQuery query = namedQueries.get(queryName);
-            if (query != null) {
-                return query;
-            }
-            currentEntity = currentEntity.getParentEntity();
-        }
-        return null;
+        this.childrenDefinitions.add(childrenEntity);
+        childrenEntity.parentDefinition = this;
     }
 
     public FieldDefinition getField(String fieldName) {
@@ -113,6 +99,6 @@ public class EntityDefinition {
                 || collectionFields.containsKey(fieldName)) {
             return this;
         }
-        return parentEntity != null ? parentEntity.getFieldEntity(fieldName) : null;
+        return parentDefinition != null ? parentDefinition.getFieldEntity(fieldName) : null;
     }
 }

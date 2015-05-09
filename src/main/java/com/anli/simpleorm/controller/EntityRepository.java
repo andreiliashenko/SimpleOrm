@@ -2,7 +2,7 @@ package com.anli.simpleorm.controller;
 
 public interface EntityRepository extends EntityController {
 
-    <E> E save(E entity);
+    <E> void save(E entity);
 
-    <E> E pull(E entity, String lazyFieldName);
+    <E> void pull(E entity, String lazyFieldName);
 }

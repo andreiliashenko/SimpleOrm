@@ -7,6 +7,10 @@ public class EntityProcessor {
     }
 
     public void setField(Object entity, String fieldName, Object fieldValue) {
+        setField(entity, fieldName, fieldValue, false);
+    }
+
+    public void setField(Object entity, String fieldName, Object fieldValue, boolean lazy) {
 
     }
 
