@@ -8,14 +8,16 @@ import com.anli.sqlexecution.execution.SqlExecutor;
 import com.anli.sqlexecution.handling.ResultSetHandler;
 import com.anli.sqlexecution.handling.TransformingResultSet;
 import java.sql.SQLException;
-import java.util.Arrays;
-import java.util.Collections;
+import java.util.Collection;
+import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import static com.anli.simpleorm.queries.QueryBuilder.FOREIGN_KEY_BINDING;
+import static java.util.Arrays.asList;
+import static java.util.Collections.singletonMap;
 
 public class SqlEngine {
 
@@ -53,7 +55,7 @@ public class SqlEngine {
             int index = query.getParameterBinding(binding);
             paramArray[index - 1] = value;
         }
-        return Arrays.asList(paramArray);
+        return asList(paramArray);
     }
 
     public <E> void insertAnemicEntity(Object primaryKey, Class<E> entityClass) {
@@ -61,30 +63,36 @@ public class SqlEngine {
         List<QueryDescriptor> insertQueries = querySet.getInsertAnemicQueries();
         for (QueryDescriptor query : insertQueries) {
             String pkBinding = getDescriptor(entityClass).getPrimaryKeyBinding();
-            executeUpdate(query, Collections.singletonMap(pkBinding, primaryKey));
+            executeUpdate(query, singletonMap(pkBinding, primaryKey));
         }
     }
 
     public boolean exists(Object primaryKey, Class entityClass) {
+        return getNonExistentKeys(asList(primaryKey), entityClass).isEmpty();
+    }
+
+    public Set getNonExistentKeys(Collection primaryKeys, Class entityClass) {
+        Set keySet = new HashSet(primaryKeys);
         Class keyClass = getDescriptor(entityClass).getPrimaryKeyClass();
         QueryDescriptor query = getQuerySet(entityClass).getSelectExistingKeysQuery();
         String pkBinding = getDescriptor(entityClass).getPrimaryKeyBinding();
-        List keys = executeSelect(query, Collections.singletonMap(pkBinding, primaryKey),
+        List existentKeys = executeSelect(query, (Map) singletonMap(pkBinding, primaryKeys),
                 new KeyCollector(keyClass));
-        return !keys.isEmpty();
+        keySet.removeAll(existentKeys);
+        return keySet;
     }
 
     public void delete(Object primaryKey, Class entityClass) {
         QueryDescriptor deleteQuery = getQuerySet(entityClass).getDeleteQuery();
         String pkBinding = getDescriptor(entityClass).getPrimaryKeyBinding();
-        executeUpdate(deleteQuery, Collections.singletonMap(pkBinding, primaryKey));
+        executeUpdate(deleteQuery, singletonMap(pkBinding, primaryKey));
     }
 
     public DataRow getByPrimaryKey(Object primaryKey, Class entityClass) {
         QueryDescriptor selectQuery = getQuerySet(entityClass).getSelectQuery();
         String pkBinding = getDescriptor(entityClass).getPrimaryKeyBinding();
         List<DataRow> rows = executeSelect(selectQuery,
-                Collections.singletonMap(pkBinding, primaryKey),
+                singletonMap(pkBinding, primaryKey),
                 new EntityDataSelector(getDescriptor(entityClass), selectQuery));
         return !rows.isEmpty() ? rows.iterator().next() : null;
     }
@@ -95,7 +103,7 @@ public class SqlEngine {
                 .getCollectionSet(collectionField).getSelectCollectionKeysQuery();
         Class collectionClass = getDescriptor(entityClass).getFieldElementClass(collectionField);
         Class keyClass = getDescriptor(collectionClass).getPrimaryKeyClass();
-        return executeSelect(query, Collections.singletonMap(FOREIGN_KEY_BINDING, foreignKey),
+        return executeSelect(query, singletonMap(FOREIGN_KEY_BINDING, foreignKey),
                 new KeyCollector(keyClass));
     }
 

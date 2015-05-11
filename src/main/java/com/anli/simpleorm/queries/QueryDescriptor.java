@@ -24,11 +24,19 @@ public class QueryDescriptor {
         return resultBindings.get(field);
     }
 
+    public Map<String, String> getResultBindings() {
+        return resultBindings;
+    }
+
     public Collection<String> getResultKeys() {
         return resultBindings.keySet();
     }
 
     public int getParameterBinding(String field) {
         return parameterBindings.get(field);
+    }
+
+    public Map<String, Integer> getParameterBindings() {
+        return parameterBindings;
     }
 }

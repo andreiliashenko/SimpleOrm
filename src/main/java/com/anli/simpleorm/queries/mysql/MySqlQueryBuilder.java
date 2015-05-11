@@ -6,14 +6,21 @@ import com.anli.simpleorm.definitions.FieldDefinition;
 import com.anli.simpleorm.definitions.ListDefinition;
 import com.anli.simpleorm.queries.QueryBuilder;
 import com.anli.simpleorm.queries.QueryDescriptor;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class MySqlQueryBuilder implements QueryBuilder {
 
+    protected static final Pattern MACRO_PATTERN = Pattern.compile("\\$\\{[^\\$]*\\}");
     protected static final String ORDERING_SUBQUERY_ALIAS = "ordering_subquery";
     protected static final String ORDERING_SUBQUERY_MACRO = "${ordering}";
     protected static final String LIST_MACRO = "${list}";
@@ -490,9 +497,59 @@ public class MySqlQueryBuilder implements QueryBuilder {
 
     public QueryDescriptor resolveMacros(QueryDescriptor descriptor, 
             Map<String, Object> parameters) {
-        
+        TreeMap<Integer, Integer> sizes = new TreeMap<>();
+        for (Map.Entry<String, Object> param : parameters.entrySet()) {
+            Object value = param.getValue();
+            if (value instanceof Collection) {
+                int paramBinding = descriptor.getParameterBinding(param.getKey());
+                sizes.put(paramBinding, ((Collection) value).size());
+            }
+        }
+        String resolvedQuery = getResolvedQuery(descriptor.getQuery(), sizes.values());
+        return new QueryDescriptor(resolvedQuery, descriptor.getParameterBindings(), 
+                descriptor.getResultBindings());
     }
 
+    protected String getResolvedQuery(String query, Collection<Integer> sizes) {
+        Matcher macroMatcher = MACRO_PATTERN.matcher(query);
+        StringBuffer buffer = new StringBuffer();
+        Iterator<Integer> sizeIter = sizes.iterator();
+        while(macroMatcher.find()) {
+            String replacement = getMacroReplacement(macroMatcher.group(),
+                    sizeIter.next());
+            macroMatcher.appendReplacement(buffer, replacement);
+        }
+        macroMatcher.appendTail(buffer);
+        return buffer.toString();
+    }
+
+    protected Map<String, Integer> getResolvedIndices(Map<String, Integer> oldIndices, 
+            Map<Integer, Integer> sizes) {
+        Map<String, Integer> resolved = new HashMap<>();
+        TreeMap<Integer, String> reversedIndices = new TreeMap<>();
+        for (Map.Entry<String, Integer> entry : oldIndices.entrySet()) {
+            reversedIndices.put(entry.getValue(), entry.getKey());
+        }
+        int difference = 0;
+        for (Map.Entry<Integer, String> reversed : reversedIndices.entrySet()) {
+            int initialIndex = reversed.getKey();
+            resolved.put(reversed.getValue(), initialIndex + difference);
+            Integer size = sizes.get(initialIndex);
+            if (size != null) {
+                difference += size;
+            }
+        }
+        return resolved;
+    }
+    protected String getMacroReplacement(String macro, int size) {
+        if (LIST_MACRO.equals(macro)) {
+            return buildParametersList(size);
+        } 
+        if (ORDERING_SUBQUERY_MACRO.equals(macro)) {
+            return buildListOrderingSubquery(size);
+        }
+        throw new RuntimeException("Incorrect macro " + macro);
+    }
     protected String buildParametersList(int size) {
         StringBuilder list = new StringBuilder();
         boolean isCommaNeeded = false;
