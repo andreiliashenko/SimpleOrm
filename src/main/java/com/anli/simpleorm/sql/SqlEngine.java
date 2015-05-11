@@ -13,6 +13,7 @@ import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import static com.anli.simpleorm.queries.QueryBuilder.FOREIGN_KEY_BINDING;
 
@@ -39,7 +40,7 @@ public class SqlEngine {
         return getExecutor().executeSelect(query.getQuery(), paramList, handler);
     }
 
-    protected QueryDescriptor resolveQuery(QueryDescriptor sourceDescriptor, 
+    protected QueryDescriptor resolveQuery(QueryDescriptor sourceDescriptor,
             Map<String, Object> parameters) {
         return sourceDescriptor;
     }
@@ -153,11 +154,18 @@ public class SqlEngine {
 
         protected DataRow getRow(TransformingResultSet resultSet) throws SQLException {
             DataRow row = getNewRow();
-            Map<String, Class> bindings = getDescriptor().getHierarchicalBindingClasses();
-            for (Map.Entry<String, Class> entry : bindings.entrySet()) {
-                String binding = entry.getKey();
-                row.put(binding, resultSet.getValue(getQuery().getResultBinding(binding),
-                        entry.getValue()));
+            for (String field : getDescriptor().getSingleFields()) {
+                for (String binding : getDescriptor().getFieldBindingsWithParent(field)) {
+                    row.put(binding, resultSet.getValue(getQuery().getResultBinding(binding),
+                            getDescriptor().getFieldClass(field)));
+                }
+            }
+            for (EntityDescriptor child : getDescriptor().getChildrenDescriptors()) {
+                for (String field : child.getSingleFields()) {
+                    String binding = child.getFieldBinding(field);
+                    row.put(binding, resultSet.getValue(getQuery().getResultBinding(binding),
+                            child.getFieldClass(field)));
+                }
             }
             return row;
         }
