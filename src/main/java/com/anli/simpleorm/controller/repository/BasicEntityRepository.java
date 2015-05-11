@@ -2,8 +2,7 @@ package com.anli.simpleorm.controller.repository;
 
 import com.anli.simpleorm.controller.EntityRepository;
 import com.anli.simpleorm.controller.basic.AbstractEntityController;
-import com.anli.simpleorm.definitions.CollectionDefinition;
-import com.anli.simpleorm.definitions.EntityDefinition;
+import com.anli.simpleorm.descriptors.CollectionFieldDescriptor;
 import com.anli.simpleorm.descriptors.UnitDescriptorManager;
 import com.anli.simpleorm.exceptions.NonExistentEntitiesException;
 import com.anli.simpleorm.exceptions.ReflectionException;
@@ -64,7 +63,7 @@ public class BasicEntityRepository extends AbstractEntityController implements E
     }
 
     protected void checkReferencesConsistency(Object entity, Class entityClass) {
-    //    EntityDefinition
+        //    EntityDefinition
     }
 
     @Override
@@ -73,8 +72,8 @@ public class BasicEntityRepository extends AbstractEntityController implements E
     }
 
     @Override
-    protected Collection getCollectionValue(EntityDefinition entityDefinition,
-            CollectionDefinition fieldDefinition, Object foreignKey, LoadingContext loadingContext) {
+    protected Collection getCollectionValue(CollectionFieldDescriptor descriptor, Object foreignKey,
+            LoadingContext loadingContext) {
         return null;
     }
 }

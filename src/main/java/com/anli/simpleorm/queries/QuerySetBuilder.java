@@ -20,13 +20,10 @@ public class QuerySetBuilder {
         querySet.setInsertFullQueries(builder.buildInsertFullEntityQueries(definition));
         querySet.setUpdateQuery(builder.buildUpdateEntityQuery(definition));
         querySet.setDeleteQuery(builder.buildDeleteEntityQuery(definition));
-        for (CollectionDefinition field : definition.getCollectionFields()) {
-            querySet.addCollectionSet(field.getName(), buildCollectionQuerySet(field));
-        }
         return querySet;
     }
     
-    protected CollectionQuerySet buildCollectionQuerySet(CollectionDefinition definition) {
+    public CollectionQuerySet buildCollectionQuerySet(CollectionDefinition definition) {
         CollectionQuerySet querySet = new CollectionQuerySet();
         querySet.setSelectCollectionKeysQuery(builder.buildSelectCollectionKeysQuery(definition));
         querySet.setLinkCollectionQuery(builder.buildLinkCollectionQuery(definition));

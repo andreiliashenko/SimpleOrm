@@ -1,6 +1,8 @@
 package com.anli.simpleorm.sql;
 
+import com.anli.simpleorm.descriptors.CollectionFieldDescriptor;
 import com.anli.simpleorm.descriptors.EntityDescriptor;
+import com.anli.simpleorm.descriptors.FieldDescriptor;
 import com.anli.simpleorm.descriptors.UnitDescriptorManager;
 import com.anli.simpleorm.queries.EntityQuerySet;
 import com.anli.simpleorm.queries.QueryDescriptor;
@@ -97,12 +99,10 @@ public class SqlEngine {
         return !rows.isEmpty() ? rows.iterator().next() : null;
     }
 
-    public List getCollectionKeys(Object foreignKey, Class entityClass,
+    public List getCollectionKeys(CollectionFieldDescriptor field, Object foreignKey,
             String collectionField) {
-        QueryDescriptor query = getDescriptor(entityClass).getQuerySet()
-                .getCollectionSet(collectionField).getSelectCollectionKeysQuery();
-        Class collectionClass = getDescriptor(entityClass).getFieldElementClass(collectionField);
-        Class keyClass = getDescriptor(collectionClass).getPrimaryKeyClass();
+        Class keyClass = getDescriptor(field.getElementClass()).getPrimaryKeyClass();
+        QueryDescriptor query = field.getQuerySet().getSelectCollectionKeysQuery();
         return executeSelect(query, singletonMap(FOREIGN_KEY_BINDING, foreignKey),
                 new KeyCollector(keyClass));
     }
@@ -162,20 +162,28 @@ public class SqlEngine {
 
         protected DataRow getRow(TransformingResultSet resultSet) throws SQLException {
             DataRow row = getNewRow();
-            for (String field : getDescriptor().getSingleFields()) {
-                for (String binding : getDescriptor().getFieldBindingsWithParent(field)) {
+            for (FieldDescriptor field : getDescriptor().getSingleFields()) {
+                for (String binding : field.getAllBindings()) {
                     row.put(binding, resultSet.getValue(getQuery().getResultBinding(binding),
-                            getDescriptor().getFieldClass(field)));
+                            field.getFieldClass()));
                 }
             }
             for (EntityDescriptor child : getDescriptor().getChildrenDescriptors()) {
-                for (String field : child.getSingleFields()) {
-                    String binding = child.getFieldBinding(field);
-                    row.put(binding, resultSet.getValue(getQuery().getResultBinding(binding),
-                            child.getFieldClass(field)));
-                }
+                populateRowForChild(resultSet, child, row);
             }
             return row;
+        }
+
+        protected void populateRowForChild(TransformingResultSet resultSet,
+                EntityDescriptor descriptor, DataRow row) throws SQLException {
+            for (FieldDescriptor field : descriptor.getSingleFields()) {
+                String binding = field.getBinding();
+                row.put(binding, resultSet.getValue(getQuery().getResultBinding(binding),
+                        field.getFieldClass()));
+            }
+            for (EntityDescriptor childDescriptor : descriptor.getChildrenDescriptors()) {
+                populateRowForChild(resultSet, childDescriptor, row);
+            }
         }
 
         protected EntityDescriptor getDescriptor() {

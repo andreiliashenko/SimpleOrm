@@ -3,9 +3,8 @@ package com.anli.simpleorm.descriptors;
 import com.anli.simpleorm.controller.PrimaryKeyGenerator;
 import com.anli.simpleorm.queries.EntityQuerySet;
 import com.anli.simpleorm.reflective.EntityProcessor;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 
 public class EntityDescriptor {
 
@@ -21,27 +20,27 @@ public class EntityDescriptor {
         return null;
     }
 
-    public Class getFieldClass(String field) {
-        return null;
-    }
-
     public EntityQuerySet getQuerySet() {
         return null;
     }
 
-    public String getFieldBinding(String field) {
+    public Collection<FieldDescriptor> getFields() {
         return null;
     }
 
-    public List<String> getFieldBindingsWithParent(String field) {
+    public Iterable<FieldDescriptor> getPrimitiveFields() {
         return null;
     }
 
-    public Set<String> getSingleFields() {
+    public Iterable<FieldDescriptor> getSingleFields() {
         return null;
     }
 
-    public Class getFieldElementClass(String field) {
+    public Iterable<FieldDescriptor> getReferenceFields() {
+        return null;
+    }
+
+    public Iterable<CollectionFieldDescriptor> getCollectionFields() {
         return null;
     }
 
@@ -50,6 +49,10 @@ public class EntityDescriptor {
     }
 
     public String getPrimaryKeyBinding() {
+        return null;
+    }
+
+    public Class getEntityClass() {
         return null;
     }
 }

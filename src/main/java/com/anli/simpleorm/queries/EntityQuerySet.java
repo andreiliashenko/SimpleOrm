@@ -1,8 +1,6 @@
 package com.anli.simpleorm.queries;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class EntityQuerySet {
 
@@ -13,12 +11,6 @@ public class EntityQuerySet {
     protected List<QueryDescriptor> insertAnemicQueries;
     protected QueryDescriptor updateQuery;
     protected QueryDescriptor deleteQuery;
-
-    protected final Map<String, CollectionQuerySet> collectionSets;
-
-    public EntityQuerySet() {
-        collectionSets = new HashMap<>();
-    }
 
     public QueryDescriptor getSelectQuery() {
         return selectQuery;
@@ -74,13 +66,5 @@ public class EntityQuerySet {
 
     public void setDeleteQuery(QueryDescriptor deleteQuery) {
         this.deleteQuery = deleteQuery;
-    }
-
-    public CollectionQuerySet getCollectionSet(String field) {
-        return collectionSets.get(field);
-    }
-
-    public void addCollectionSet(String field, CollectionQuerySet set) {
-        collectionSets.put(field, set);
     }
 }

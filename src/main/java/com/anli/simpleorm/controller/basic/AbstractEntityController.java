@@ -2,11 +2,9 @@ package com.anli.simpleorm.controller.basic;
 
 import com.anli.simpleorm.controller.EntityController;
 import com.anli.simpleorm.controller.PrimaryKeyGenerator;
-import com.anli.simpleorm.definitions.CollectionDefinition;
-import com.anli.simpleorm.definitions.EntityDefinition;
-import com.anli.simpleorm.definitions.FieldDefinition;
-import com.anli.simpleorm.definitions.ReferenceDefinition;
+import com.anli.simpleorm.descriptors.CollectionFieldDescriptor;
 import com.anli.simpleorm.descriptors.EntityDescriptor;
+import com.anli.simpleorm.descriptors.FieldDescriptor;
 import com.anli.simpleorm.descriptors.UnitDescriptorManager;
 import com.anli.simpleorm.reflective.EntityProcessor;
 import com.anli.simpleorm.sql.DataRow;
@@ -50,71 +48,64 @@ public abstract class AbstractEntityController implements EntityController {
     }
 
     protected <E> E buildEntity(Class<E> entityClass, DataRow dataRow, LoadingContext context) {
-        //Class<? extends E> effectiveClass = getEffectiveClass(entityClass, dataRow);
-        //E instance = getEntityInstance(effectiveClass);
-        //populateEntity(getDefinition(effectiveClass), getProcessor(effectiveClass),
-        //        instance, dataRow, getLoadingContext());
-       //return instance;
-        return null;
+        Class<? extends E> effectiveClass = getEffectiveClass(getDescriptor(entityClass), dataRow);
+        E instance = getEntityInstance(effectiveClass);
+        populateEntity(getDescriptor(effectiveClass), instance, dataRow, getLoadingContext());
+        return instance;
     }
 
-    protected <E> void populateEntity(EntityDefinition definition, EntityProcessor processor,
-            E entity, DataRow dataRow, LoadingContext context) {
-        EntityDefinition parentDefinition = definition.getParentDefinition();
-        if (parentDefinition != null) {
-            populateEntity(parentDefinition, processor, entity, dataRow, context);
+    protected <E> void populateEntity(EntityDescriptor descriptor, E entity,
+            DataRow dataRow, LoadingContext context) {
+        EntityProcessor processor = descriptor.getProcessor();
+        Object entityKey = dataRow.get(descriptor.getPrimaryKeyBinding());
+        for (FieldDescriptor primitiveField : descriptor.getPrimitiveFields()) {
+            setPrimitiveField(primitiveField, processor, entity,
+                    dataRow.get(primitiveField.getBinding()));
         }
-        //Object entityKey = dataRow.get(definition.getPrimaryKeyDataRowKey());
-        for (FieldDefinition singleField : definition.getSingleFields()) {
-            //Object value = dataRow.get(definition.getDataRowKey(singleField.getName()));
-            if (singleField instanceof ReferenceDefinition) {
-             //   setReferenceField((ReferenceDefinition) singleField,
-                //        processor, entity, value, context);
-            } else {
-             //   setPrimitiveField(singleField, processor, entity, value);
+        for (FieldDescriptor referenceField : descriptor.getReferenceFields()) {
+            setReferenceField(referenceField, processor, entity,
+                    dataRow.get(referenceField.getBinding()), context);
+        }
+        for (CollectionFieldDescriptor collectionField : descriptor.getCollectionFields()) {
+            Collection collectionValue = getCollectionValue(collectionField, entityKey, context);
+            setCollectionField(collectionField, processor, entity, collectionValue);
+        }
+    }
+
+    protected <E> void setReferenceField(FieldDescriptor field, EntityProcessor processor,
+            E entity, Object key, LoadingContext context) {
+        Object referenceValue = context.get(field.getFieldClass(), key, field.isLazy());
+        processor.setField(entity, field.getName(), referenceValue, field.isLazy());
+    }
+
+    protected <E> void setPrimitiveField(FieldDescriptor field, EntityProcessor processor,
+            E entity, Object value) {
+        processor.setField(entity, field.getName(), value);
+    }
+
+    protected <E> void setCollectionField(CollectionFieldDescriptor field, EntityProcessor processor,
+            E entity, Collection collectionValue) {
+        processor.setField(entity, field.getName(), collectionValue, field.isLazy());
+    }
+
+    protected <E> Class<? extends E> getEffectiveClass(EntityDescriptor descriptor, DataRow dataRow) {
+        String keyBinding = descriptor.getPrimaryKeyBinding();
+        if (dataRow.get(keyBinding) == null) {
+            return null;
+        }
+        for (EntityDescriptor child : descriptor.getChildrenDescriptors()) {
+            Class resolvedClass = getEffectiveClass(child, dataRow);
+            if (resolvedClass != null) {
+                return resolvedClass;
             }
         }
-        for (CollectionDefinition collectionField : definition.getCollectionFields()) {
-           // Collection collectionValue = getCollectionValue(definition, collectionField,
-           //         entityKey, context);
-          //  setCollectionField(collectionField, processor, entity, collectionValue);
-        }
+        return descriptor.getEntityClass();
     }
 
-    protected <E> void setReferenceField(ReferenceDefinition fieldDefinition,
-            EntityProcessor processor, E entity, Object key, LoadingContext context) {
-        Class referenceClass = fieldDefinition.getReferencedEntity().getEntityClass();
-        boolean lazy = fieldDefinition.isLazy();
-        Object referenceValue = context.get(referenceClass, key, lazy);
-        processor.setField(entity, fieldDefinition.getName(), referenceValue, lazy);
-    }
-
-    protected <E> void setPrimitiveField(FieldDefinition fieldDefinition,
-            EntityProcessor processor, E entity, Object value) {
-        processor.setField(entity, fieldDefinition.getName(), value);
-    }
-
-    protected <E> void setCollectionField(CollectionDefinition fieldDefinition,
-            EntityProcessor processor, E entity, Collection collectionValue) {
-        processor.setField(entity, fieldDefinition.getName(), collectionValue,
-                fieldDefinition.isLazy());
-    }
-
-    /*protected <E> Class<? extends E> getEffectiveClass(Class<E> entityClass, DataRow dataRow) {
-        EntityDefinition definition = getDefinition(entityClass);
-        for (EntityDefinition childDefinition : definition.getChildrenDefinitions()) {
-            String rowKey = childDefinition.getPrimaryKeyDataRowKey();
-            if (dataRow.get(rowKey) != null) {
-                return getEffectiveClass(childDefinition.getEntityClass(), dataRow);
-            }
-        }
-        return entityClass;
-    }
-*/
     protected <E> void storeEntity(E entity) {
-        
+
     }
-    
+
     protected UnitDescriptorManager getDescriptorManager() {
         return descriptorManager;
     }
@@ -145,8 +136,8 @@ public abstract class AbstractEntityController implements EntityController {
 
     protected abstract LoadingContext getLoadingContext();
 
-    protected abstract Collection getCollectionValue(EntityDefinition entityDefinition,
-            CollectionDefinition fieldDefinition, Object foreignKey, LoadingContext loadingContext);
+    protected abstract Collection getCollectionValue(CollectionFieldDescriptor descriptor,
+            Object foreignKey, LoadingContext loadingContext);
 
     protected static interface LoadingContext {
 
