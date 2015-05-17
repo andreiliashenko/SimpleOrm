@@ -4,9 +4,9 @@ import com.anli.simpleorm.definitions.CollectionDefinition;
 import com.anli.simpleorm.definitions.EntityDefinition;
 import com.anli.simpleorm.definitions.FieldDefinition;
 import com.anli.simpleorm.definitions.ListDefinition;
+import com.anli.simpleorm.definitions.ReferenceDefinition;
 import com.anli.simpleorm.queries.QueryBuilder;
 import com.anli.simpleorm.queries.QueryDescriptor;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -495,7 +495,7 @@ public class MySqlQueryBuilder implements QueryBuilder {
                 .append(LIST_MACRO).append(")");
     }
 
-    public QueryDescriptor resolveMacros(QueryDescriptor descriptor, 
+    public QueryDescriptor resolveMacros(QueryDescriptor descriptor,
             Map<String, Object> parameters) {
         TreeMap<Integer, Integer> sizes = new TreeMap<>();
         for (Map.Entry<String, Object> param : parameters.entrySet()) {
@@ -506,7 +506,7 @@ public class MySqlQueryBuilder implements QueryBuilder {
             }
         }
         String resolvedQuery = getResolvedQuery(descriptor.getQuery(), sizes.values());
-        return new QueryDescriptor(resolvedQuery, descriptor.getParameterBindings(), 
+        return new QueryDescriptor(resolvedQuery, descriptor.getParameterBindings(),
                 descriptor.getResultBindings());
     }
 
@@ -514,7 +514,7 @@ public class MySqlQueryBuilder implements QueryBuilder {
         Matcher macroMatcher = MACRO_PATTERN.matcher(query);
         StringBuffer buffer = new StringBuffer();
         Iterator<Integer> sizeIter = sizes.iterator();
-        while(macroMatcher.find()) {
+        while (macroMatcher.find()) {
             String replacement = getMacroReplacement(macroMatcher.group(),
                     sizeIter.next());
             macroMatcher.appendReplacement(buffer, replacement);
@@ -523,7 +523,7 @@ public class MySqlQueryBuilder implements QueryBuilder {
         return buffer.toString();
     }
 
-    protected Map<String, Integer> getResolvedIndices(Map<String, Integer> oldIndices, 
+    protected Map<String, Integer> getResolvedIndices(Map<String, Integer> oldIndices,
             Map<Integer, Integer> sizes) {
         Map<String, Integer> resolved = new HashMap<>();
         TreeMap<Integer, String> reversedIndices = new TreeMap<>();
@@ -541,15 +541,17 @@ public class MySqlQueryBuilder implements QueryBuilder {
         }
         return resolved;
     }
+
     protected String getMacroReplacement(String macro, int size) {
         if (LIST_MACRO.equals(macro)) {
             return buildParametersList(size);
-        } 
+        }
         if (ORDERING_SUBQUERY_MACRO.equals(macro)) {
             return buildListOrderingSubquery(size);
         }
         throw new RuntimeException("Incorrect macro " + macro);
     }
+
     protected String buildParametersList(int size) {
         StringBuilder list = new StringBuilder();
         boolean isCommaNeeded = false;

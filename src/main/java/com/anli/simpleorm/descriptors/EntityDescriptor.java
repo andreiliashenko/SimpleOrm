@@ -1,6 +1,7 @@
 package com.anli.simpleorm.descriptors;
 
 import com.anli.simpleorm.controller.PrimaryKeyGenerator;
+import com.anli.simpleorm.definitions.EntityDefinition;
 import com.anli.simpleorm.queries.EntityQuerySet;
 import com.anli.simpleorm.reflective.EntityProcessor;
 import java.util.Collection;
@@ -48,11 +49,19 @@ public class EntityDescriptor {
         return null;
     }
 
+    public FieldDescriptor getField(String field) {
+        return null;
+    }
+
     public String getPrimaryKeyBinding() {
         return null;
     }
 
     public Class getEntityClass() {
+        return null;
+    }
+
+    public EntityDefinition getDefinition() {
         return null;
     }
 }

@@ -7,11 +7,18 @@ public class EntityProcessor {
     }
 
     public void setField(Object entity, String fieldName, Object fieldValue) {
-        setField(entity, fieldName, fieldValue, false);
     }
 
-    public void setField(Object entity, String fieldName, Object fieldValue, boolean lazy) {
+    public void setLazyKey(Object entity, String fieldName, Object key) {
 
+    }
+
+    public Object getLazyKey(Object entity, String fieldName) {
+        return null;
+    }
+
+    public boolean isLazyClean(Object entity, String fieldName) {
+        return false;
     }
 
     public Object getPrimaryKey(Object entity) {
@@ -19,6 +26,10 @@ public class EntityProcessor {
     }
 
     public Object getField(Object entity, String fieldName) {
+        return null;
+    }
+
+    public <E> E getInstance() {
         return null;
     }
 }

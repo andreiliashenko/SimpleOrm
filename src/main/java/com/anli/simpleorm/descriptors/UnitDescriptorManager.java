@@ -5,4 +5,8 @@ public class UnitDescriptorManager {
     public EntityDescriptor getDescriptor(Class entityClass) {
         return null;
     }
+    
+    public Class getBasicEntityClass(Class proxyClass) {
+        return null;
+    }
 }

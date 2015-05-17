@@ -9,8 +9,10 @@ import com.anli.simpleorm.queries.QueryDescriptor;
 import com.anli.sqlexecution.execution.SqlExecutor;
 import com.anli.sqlexecution.handling.ResultSetHandler;
 import com.anli.sqlexecution.handling.TransformingResultSet;
+import com.google.common.base.Function;
 import java.sql.SQLException;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedList;
 import java.util.List;
@@ -18,6 +20,7 @@ import java.util.Map;
 import java.util.Set;
 
 import static com.anli.simpleorm.queries.QueryBuilder.FOREIGN_KEY_BINDING;
+import static com.anli.simpleorm.queries.QueryBuilder.LINKED_KEYS_BINDING;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
 
@@ -95,16 +98,44 @@ public class SqlEngine {
         String pkBinding = getDescriptor(entityClass).getPrimaryKeyBinding();
         List<DataRow> rows = executeSelect(selectQuery,
                 singletonMap(pkBinding, primaryKey),
-                new EntityDataSelector(getDescriptor(entityClass), selectQuery));
+                new ListDataSelector(getDescriptor(entityClass), selectQuery));
         return !rows.isEmpty() ? rows.iterator().next() : null;
     }
 
-    public List getCollectionKeys(CollectionFieldDescriptor field, Object foreignKey,
-            String collectionField) {
+    public void updateEntity(Map<String, Object> parameters, Class entityClass) {
+        QueryDescriptor updateQuery = getQuerySet(entityClass).getUpdateQuery();
+        executeUpdate(updateQuery, parameters);
+    }
+
+    public List getCollectionKeys(CollectionFieldDescriptor field, Object foreignKey) {
         Class keyClass = getDescriptor(field.getElementClass()).getPrimaryKeyClass();
         QueryDescriptor query = field.getQuerySet().getSelectCollectionKeysQuery();
         return executeSelect(query, singletonMap(FOREIGN_KEY_BINDING, foreignKey),
                 new KeyCollector(keyClass));
+    }
+
+    public Map<Object, DataRow> getCollectionData(Class elementClass, Collection keys) {
+        EntityDescriptor elementDescriptor = getDescriptor(elementClass);
+        QueryDescriptor selectQuery = elementDescriptor.getQuerySet().getSelectByKeysQuery();
+        String pkBinding = elementDescriptor.getPrimaryKeyBinding();
+        return executeSelect(selectQuery, (Map) singletonMap(pkBinding, keys),
+                new MapDataSelector(elementDescriptor, selectQuery));
+    }
+
+    public void updateCollectionLinkage(CollectionFieldDescriptor field, Collection keys,
+            Object foreignKey) {
+        if (keys == null || keys.isEmpty()) {
+            QueryDescriptor clearQuery = field.getQuerySet().getClearCollectionQuery();
+            executeUpdate(clearQuery, singletonMap(FOREIGN_KEY_BINDING, foreignKey));
+            return;
+        }
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put(FOREIGN_KEY_BINDING, foreignKey);
+        parameters.put(LINKED_KEYS_BINDING, keys);
+        QueryDescriptor linkQuery = field.getQuerySet().getLinkCollectionQuery();
+        QueryDescriptor unlinkQuery = field.getQuerySet().getUnlinkCollectionQuery();
+        executeUpdate(linkQuery, parameters);
+        executeUpdate(unlinkQuery, parameters);
     }
 
     protected EntityQuerySet getQuerySet(Class entityClass) {
@@ -121,6 +152,20 @@ public class SqlEngine {
 
     protected SqlExecutor getExecutor() {
         return executor;
+    }
+
+    protected class DataRowMapper implements Function<Object, DataRow> {
+
+        protected final Map<Object, DataRow> rowMap;
+
+        public DataRowMapper(Map<Object, DataRow> rowMap) {
+            this.rowMap = rowMap;
+        }
+
+        @Override
+        public DataRow apply(Object input) {
+            return rowMap.get(input);
+        }
     }
 
     protected class KeyCollector implements ResultSetHandler<List> {
@@ -141,7 +186,7 @@ public class SqlEngine {
         }
     }
 
-    protected class EntityDataSelector implements ResultSetHandler<List<DataRow>> {
+    protected abstract class EntityDataSelector<T> implements ResultSetHandler<T> {
 
         protected final EntityDescriptor descriptor;
         protected final QueryDescriptor query;
@@ -149,15 +194,6 @@ public class SqlEngine {
         public EntityDataSelector(EntityDescriptor descriptor, QueryDescriptor query) {
             this.descriptor = descriptor;
             this.query = query;
-        }
-
-        @Override
-        public List handle(TransformingResultSet resultSet) throws SQLException {
-            List<DataRow> rows = new LinkedList<>();
-            while (resultSet.next()) {
-                rows.add(getRow(resultSet));
-            }
-            return rows;
         }
 
         protected DataRow getRow(TransformingResultSet resultSet) throws SQLException {
@@ -196,6 +232,40 @@ public class SqlEngine {
 
         protected DataRow getNewRow() {
             return new DataRow();
+        }
+    }
+
+    protected class ListDataSelector extends EntityDataSelector<List<DataRow>> {
+
+        public ListDataSelector(EntityDescriptor descriptor, QueryDescriptor query) {
+            super(descriptor, query);
+        }
+
+        @Override
+        public List<DataRow> handle(TransformingResultSet resultSet) throws SQLException {
+            List<DataRow> rows = new LinkedList<>();
+            while (resultSet.next()) {
+                rows.add(getRow(resultSet));
+            }
+            return rows;
+        }
+    }
+
+    protected class MapDataSelector extends EntityDataSelector<Map<Object, DataRow>> {
+
+        public MapDataSelector(EntityDescriptor descriptor, QueryDescriptor query) {
+            super(descriptor, query);
+        }
+
+        @Override
+        public Map<Object, DataRow> handle(TransformingResultSet resultSet) throws SQLException {
+            Map<Object, DataRow> result = new HashMap<>();
+            while (resultSet.next()) {
+                DataRow row = getRow(resultSet);
+                Object key = row.get(getDescriptor().getPrimaryKeyBinding());
+                result.put(key, row);
+            }
+            return result;
         }
     }
 }
