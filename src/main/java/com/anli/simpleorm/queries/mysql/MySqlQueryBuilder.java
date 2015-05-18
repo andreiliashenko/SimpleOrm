@@ -4,7 +4,6 @@ import com.anli.simpleorm.definitions.CollectionDefinition;
 import com.anli.simpleorm.definitions.EntityDefinition;
 import com.anli.simpleorm.definitions.FieldDefinition;
 import com.anli.simpleorm.definitions.ListDefinition;
-import com.anli.simpleorm.definitions.ReferenceDefinition;
 import com.anli.simpleorm.queries.QueryBuilder;
 import com.anli.simpleorm.queries.QueryDescriptor;
 import java.util.Collection;
@@ -310,26 +309,18 @@ public class MySqlQueryBuilder implements QueryBuilder {
 
     protected void appendFullDeleteClause(StringBuilder query, EntityDefinition definition) {
         query.append("delete ");
-        appendTableListDelete(query, definition, false, true);
+        appendTableListDelete(query, definition);
         query.append(" ");
         appendFullFromClause(query, definition, false);
     }
 
-    protected void appendTableListDelete(StringBuilder query, EntityDefinition definition,
-            boolean withChildren, boolean withParent) {
+    protected void appendTableListDelete(StringBuilder query, EntityDefinition definition) {
         EntityDefinition parent = definition.getParentDefinition();
-        if (parent != null && withParent) {
-            appendTableListDelete(query, parent, false, true);
+        if (parent != null) {
+            appendTableListDelete(query, parent);
             query.append(", ");
         }
         query.append(definition.getName().toLowerCase());
-        if (!withChildren) {
-            return;
-        }
-        for (EntityDefinition child : definition.getChildrenDefinitions()) {
-            query.append(", ");
-            appendTableListDelete(query, child, true, false);
-        }
     }
 
     protected void appendJoinClauses(StringBuilder query, EntityDefinition definition,

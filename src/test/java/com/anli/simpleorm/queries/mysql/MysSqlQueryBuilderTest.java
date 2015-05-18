@@ -5,7 +5,6 @@ import com.anli.simpleorm.definitions.EntityDefinition;
 import com.anli.simpleorm.definitions.FieldDefinition;
 import com.anli.simpleorm.definitions.ListDefinition;
 import com.anli.simpleorm.definitions.ReferenceDefinition;
-import com.anli.simpleorm.queries.QueryBuilder;
 import com.anli.simpleorm.queries.QueryDescriptor;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -14,11 +13,13 @@ import java.util.Map;
 import org.apache.commons.lang.StringUtils;
 import org.junit.Test;
 
+import static java.util.Arrays.asList;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotSame;
 
 public class MysSqlQueryBuilderTest {
 
-    protected final QueryBuilder queryBuilder = new MySqlQueryBuilder();
+    protected final MySqlQueryBuilder queryBuilder = new MySqlQueryBuilder();
 
     @Test
     public void testConcreteSelectQuery() {
@@ -168,6 +169,16 @@ public class MysSqlQueryBuilderTest {
         assertEquals(etalonQuery, query.getQuery());
         assertEquals(1, query.getParameterBinding("foreignKey"));
         assertEquals(2, query.getParameterBinding("linkedKeys"));
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("foreignKey", new Object());
+        parameters.put("linkedKeys", asList(new Object(), new Object(), new Object()));
+        String resolvedEtalon = "update atomics as atomic set atomic.a_ref = ?"
+                + " where atomic.atomic_id in (?, ?, ?)";
+        QueryDescriptor resolved = queryBuilder.resolveMacros(query, parameters);
+        assertNotSame(query, resolved);
+        assertEquals(resolvedEtalon, resolved.getQuery());
+        assertEquals(1, resolved.getParameterBinding("foreignKey"));
+        assertEquals(2, resolved.getParameterBinding("linkedKeys"));
     }
 
     @Test
@@ -181,6 +192,19 @@ public class MysSqlQueryBuilderTest {
         assertEquals(etalonQuery, query.getQuery());
         assertEquals(1, query.getParameterBinding("linkedKeys"));
         assertEquals(2, query.getParameterBinding("foreignKey"));
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("foreignKey", new Object());
+        parameters.put("linkedKeys", asList(new Object(), new Object()));
+        String resolvedEtalon = "update atomics as atomic join "
+                + "(select ? as key_column, 0 as order_column from dual union all "
+                + "select ? as key_column, 1 as order_column from dual) ordering_subquery "
+                + "on atomic.atomic_id = ordering_subquery.key_column "
+                + "set atomic.b_ref = ?, atomic.b_order = ordering_subquery.order_column";
+        QueryDescriptor resolved = queryBuilder.resolveMacros(query, parameters);
+        assertNotSame(query, resolved);
+        assertEquals(resolvedEtalon, resolved.getQuery());
+        assertEquals(1, resolved.getParameterBinding("linkedKeys"));
+        assertEquals(2, resolved.getParameterBinding("foreignKey"));
     }
 
     @Test
@@ -193,6 +217,16 @@ public class MysSqlQueryBuilderTest {
         assertEquals(etalonQuery, query.getQuery());
         assertEquals(1, query.getParameterBinding("foreignKey"));
         assertEquals(2, query.getParameterBinding("linkedKeys"));
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("foreignKey", new Object());
+        parameters.put("linkedKeys", asList(new Object()));
+        String resolvedEtalon = "update atomics as atomic set atomic.a_ref = null"
+                + " where atomic.a_ref = ? and atomic.atomic_id not in (?)";
+        QueryDescriptor resolved = queryBuilder.resolveMacros(query, parameters);
+        assertNotSame(query, resolved);
+        assertEquals(resolvedEtalon, resolved.getQuery());
+        assertEquals(1, resolved.getParameterBinding("foreignKey"));
+        assertEquals(2, resolved.getParameterBinding("linkedKeys"));
     }
 
     @Test
@@ -206,6 +240,17 @@ public class MysSqlQueryBuilderTest {
         assertEquals(etalonQuery, query.getQuery());
         assertEquals(1, query.getParameterBinding("foreignKey"));
         assertEquals(2, query.getParameterBinding("linkedKeys"));
+        Map<String, Object> parameters = new HashMap<>();
+        parameters.put("foreignKey", new Object());
+        parameters.put("linkedKeys", asList(new Object(), new Object(), new Object(), new Object()));
+        String resolvedEtalon = "update atomics as atomic "
+                + "set atomic.b_ref = null, atomic.b_order = null"
+                + " where atomic.b_ref = ? and atomic.atomic_id not in (?, ?, ?, ?)";
+        QueryDescriptor resolved = queryBuilder.resolveMacros(query, parameters);
+        assertNotSame(query, resolved);
+        assertEquals(resolvedEtalon, resolved.getQuery());
+        assertEquals(1, resolved.getParameterBinding("foreignKey"));
+        assertEquals(2, resolved.getParameterBinding("linkedKeys"));
     }
 
     @Test
@@ -363,7 +408,7 @@ public class MysSqlQueryBuilderTest {
         QueryDescriptor rootQuery = queries.get(0);
         String etalonQuery = "insert into roots (root_id) values (?)";
         assertEquals(etalonQuery, rootQuery.getQuery());
-        assertEquals(1, rootQuery.getParameterBinding("Root.id"));
+        assertEquals(1, rootQuery.getParameterBinding("Super.id"));
         QueryDescriptor superQuery = queries.get(1);
         List<String> columns = new ArrayList<>(2);
         Map<String, String> columnFields = new HashMap<>();
@@ -389,7 +434,7 @@ public class MysSqlQueryBuilderTest {
         QueryDescriptor rootQuery = queries.get(0);
         String etalonQuery = "insert into roots (root_id) values (?)";
         assertEquals(etalonQuery, rootQuery.getQuery());
-        assertEquals(1, rootQuery.getParameterBinding("Root.id"));
+        assertEquals(1, rootQuery.getParameterBinding("Super.id"));
         QueryDescriptor superQuery = queries.get(1);
         etalonQuery = "insert into supers (super_id) values (?)";
         assertEquals(etalonQuery, superQuery.getQuery());
