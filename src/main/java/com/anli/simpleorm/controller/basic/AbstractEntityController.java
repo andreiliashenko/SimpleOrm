@@ -6,6 +6,8 @@ import com.anli.simpleorm.descriptors.CollectionFieldDescriptor;
 import com.anli.simpleorm.descriptors.EntityDescriptor;
 import com.anli.simpleorm.descriptors.FieldDescriptor;
 import com.anli.simpleorm.descriptors.UnitDescriptorManager;
+import com.anli.simpleorm.lazy.LazyValue;
+import com.anli.simpleorm.lazy.Loader;
 import com.anli.simpleorm.reflective.EntityProcessor;
 import com.anli.simpleorm.sql.DataRow;
 import com.anli.simpleorm.sql.SqlEngine;
@@ -80,7 +82,7 @@ public abstract class AbstractEntityController implements EntityController {
         for (CollectionFieldDescriptor collectionField : descriptor.getCollectionFields()) {
             Collection collectionValue = getCollectionValue(collectionField, entityKey,
                     collectionField.isLazy(), context);
-            setCollectionField(collectionField, processor, entity, collectionValue, 
+            setCollectionField(collectionField, processor, entity, collectionValue,
                     collectionField.isLazy());
         }
     }
@@ -88,7 +90,8 @@ public abstract class AbstractEntityController implements EntityController {
     protected <E> void setReferenceField(FieldDescriptor field, EntityProcessor processor,
             E entity, Object key, LoadingContext context, boolean isLazy) {
         if (isLazy) {
-            processor.setLazyKey(entity, field.getName(), key);
+            processor.setLazyReference(entity, field.getName(),
+                    new LazyValue(getLoader(field.getFieldClass()), key));
         }
         Object referenceValue = key != null ? context.get(field.getFieldClass(),
                 key, isLazy) : null;
@@ -150,7 +153,7 @@ public abstract class AbstractEntityController implements EntityController {
 
     protected <E> Object getReferenceKey(FieldDescriptor field, EntityProcessor processor,
             E entity) {
-        if (field.isLazy()) {
+        if (processor.isLazyClean(entity, field.getName())) {
             return processor.getLazyKey(entity, field.getName());
         }
         Object reference = processor.getField(entity, field.getName());
@@ -207,6 +210,8 @@ public abstract class AbstractEntityController implements EntityController {
 
     protected abstract Collection getCollectionValue(CollectionFieldDescriptor descriptor,
             Object foreignKey, boolean isLazy, LoadingContext loadingContext);
+
+    protected abstract Loader getLoader(Class entityClass);
 
     protected static interface LoadingContext {
 

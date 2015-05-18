@@ -7,9 +7,11 @@ import com.anli.simpleorm.descriptors.CollectionFieldDescriptor;
 import com.anli.simpleorm.descriptors.EntityDescriptor;
 import com.anli.simpleorm.descriptors.FieldDescriptor;
 import com.anli.simpleorm.descriptors.UnitDescriptorManager;
+import com.anli.simpleorm.exceptions.LazyFieldException;
 import com.anli.simpleorm.exceptions.NonExistentEntitiesException;
+import com.anli.simpleorm.lazy.Loader;
 import com.anli.simpleorm.reflective.EntityProcessor;
-import com.anli.simpleorm.reflective.RepositoryProcessor;
+import com.anli.simpleorm.reflective.repository.RepositoryProcessor;
 import com.anli.simpleorm.sql.DataRow;
 import com.anli.simpleorm.sql.SqlEngine;
 import java.util.ArrayList;
@@ -28,6 +30,8 @@ import static com.google.common.base.Preconditions.checkState;
 import static java.util.Collections.emptySet;
 
 public class BasicEntityRepository extends AbstractEntityController implements EntityRepository {
+
+    protected static final Loader ERROR_LAZY_LOADER = new ErrorLoader();
 
     public BasicEntityRepository(UnitDescriptorManager descriptorManager, SqlEngine sqlEngine) {
         super(descriptorManager, sqlEngine);
@@ -106,7 +110,7 @@ public class BasicEntityRepository extends AbstractEntityController implements E
             if (processor.isLazyClean(entity, fieldName)) {
                 Object key = processor.getLazyKey(entity, fieldName);
                 if (key != null && !getSqlEngine().exists(key, fieldClass)) {
-                    processor.setLazyKey(entity, fieldName, null);
+                    processor.setLazyReference(entity, fieldName, null);
                 }
             } else {
                 Object reference = processor.getField(entity, fieldName);
@@ -158,7 +162,7 @@ public class BasicEntityRepository extends AbstractEntityController implements E
     protected <E> void setCollectionField(CollectionFieldDescriptor field, EntityProcessor processor, E entity,
             Collection collectionValue, boolean isLazy) {
         if (isLazy) {
-            ((RepositoryProcessor) processor).markLazyCollection(field.getName());
+            ((RepositoryProcessor) processor).markLazyCollection(entity, field.getName());
         }
         super.setCollectionField(field, processor, entity, collectionValue, isLazy);
     }
@@ -179,6 +183,25 @@ public class BasicEntityRepository extends AbstractEntityController implements E
                 keys, isLazy);
     }
 
+    @Override
+    protected Loader getLoader(Class entityClass) {
+        return ERROR_LAZY_LOADER;
+    }
+
+    protected static class ErrorLoader implements Loader {
+
+        @Override
+        public Object get(Object key) {
+            throw new LazyFieldException();
+        }
+
+        @Override
+        public Object extractKey(Object value) {
+            throw new LazyFieldException();
+        }
+
+    }
+
     protected class AtomicContext implements LoadingContext {
 
         protected final HierarchicalCache cache;
@@ -194,7 +217,7 @@ public class BasicEntityRepository extends AbstractEntityController implements E
 
         @Override
         public <E> E get(Class<E> entityClass, Object primaryKey, boolean lazy) {
-            if (lazy) {
+            if (lazy || primaryKey == null) {
                 return null;
             }
             E entity = (E) cache.get(entityClass, primaryKey);
