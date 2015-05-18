@@ -441,6 +441,18 @@ public class MysSqlQueryBuilderTest {
         assertEquals(1, superQuery.getParameterBinding("Super.id"));
     }
 
+    @Test
+    public void testSuperSelectExistingKeysQuery() {
+         EntityDefinition definition = getRootDefinition()
+                .getChildrenDefinitions().iterator().next();
+        QueryDescriptor query = queryBuilder.buildSelectExistingKeysQuery(definition);
+        String etalonQuery = "select distinct super.super_id as super_id"
+                + " from supers as super where super.super_id in (${list})";
+        assertEquals(etalonQuery, query.getQuery());
+        assertEquals(1, query.getParameterBinding("Super.id"));
+        assertEquals("super_id", query.getResultBinding("Super.id"));
+    }
+    
     protected EntityDefinition getAtomicDefinition() {
         EntityDefinition definition = new EntityDefinition(null, "Atomic");
         definition.setTable("atomics");
