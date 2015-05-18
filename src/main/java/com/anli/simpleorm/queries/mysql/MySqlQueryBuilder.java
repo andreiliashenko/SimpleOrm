@@ -497,7 +497,9 @@ public class MySqlQueryBuilder implements QueryBuilder {
             }
         }
         String resolvedQuery = getResolvedQuery(descriptor.getQuery(), sizes.values());
-        return new QueryDescriptor(resolvedQuery, descriptor.getParameterBindings(),
+        Map<String, Integer> resolvedParameters = getResolvedIndices(descriptor.getParameterBindings(), 
+                sizes);
+        return new QueryDescriptor(resolvedQuery, resolvedParameters,
                 descriptor.getResultBindings());
     }
 
@@ -527,7 +529,7 @@ public class MySqlQueryBuilder implements QueryBuilder {
             resolved.put(reversed.getValue(), initialIndex + difference);
             Integer size = sizes.get(initialIndex);
             if (size != null) {
-                difference += size;
+                difference += (size - 1);
             }
         }
         return resolved;

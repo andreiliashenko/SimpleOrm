@@ -204,7 +204,7 @@ public class MysSqlQueryBuilderTest {
         assertNotSame(query, resolved);
         assertEquals(resolvedEtalon, resolved.getQuery());
         assertEquals(1, resolved.getParameterBinding("linkedKeys"));
-        assertEquals(2, resolved.getParameterBinding("foreignKey"));
+        assertEquals(3, resolved.getParameterBinding("foreignKey"));
     }
 
     @Test
