@@ -1,6 +1,5 @@
 package com.anli.simpleorm.queries;
 
-import java.util.Collection;
 import java.util.Map;
 
 public class QueryDescriptor {
@@ -26,10 +25,6 @@ public class QueryDescriptor {
 
     public Map<String, String> getResultBindings() {
         return resultBindings;
-    }
-
-    public Collection<String> getResultKeys() {
-        return resultBindings.keySet();
     }
 
     public int getParameterBinding(String field) {

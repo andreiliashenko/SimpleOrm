@@ -124,6 +124,5 @@ public class EntityDescriptor {
         public boolean apply(FieldDescriptor input) {
             return !(input instanceof CollectionFieldDescriptor);
         }
-
     }
 }
