@@ -165,7 +165,7 @@ public class BasicEntityRepository extends AbstractEntityController implements E
 
     @Override
     protected LoadingContext getLoadingContext() {
-        return null;
+        return new AtomicContext();
     }
 
     @Override
