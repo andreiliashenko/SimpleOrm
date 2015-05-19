@@ -9,7 +9,6 @@ import com.anli.simpleorm.queries.QueryDescriptor;
 import com.anli.sqlexecution.execution.SqlExecutor;
 import com.anli.sqlexecution.handling.ResultSetHandler;
 import com.anli.sqlexecution.handling.TransformingResultSet;
-import com.google.common.base.Function;
 import java.sql.SQLException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -142,20 +141,6 @@ public abstract class SqlEngine {
             Map<String, Object> parameters);
 
     protected abstract List resolveParameters(QueryDescriptor query, Map<String, Object> parameters);
-
-    protected class DataRowMapper implements Function<Object, DataRow> {
-
-        protected final Map<Object, DataRow> rowMap;
-
-        public DataRowMapper(Map<Object, DataRow> rowMap) {
-            this.rowMap = rowMap;
-        }
-
-        @Override
-        public DataRow apply(Object input) {
-            return rowMap.get(input);
-        }
-    }
 
     protected class KeyCollector implements ResultSetHandler<List> {
 
