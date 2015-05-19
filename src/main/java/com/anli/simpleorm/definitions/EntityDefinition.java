@@ -28,7 +28,7 @@ public class EntityDefinition {
     public Class getEntityClass() {
         return entityClass;
     }
-    
+
     public void setPrimaryKeyName(String primaryKeyName) {
         this.primaryKeyName = primaryKeyName;
     }
@@ -84,21 +84,5 @@ public class EntityDefinition {
     public void addChildrenEntity(EntityDefinition childrenEntity) {
         this.childrenDefinitions.add(childrenEntity);
         childrenEntity.parentDefinition = this;
-    }
-
-    public FieldDefinition getField(String fieldName) {
-        FieldDefinition field = singleFields.get(fieldName);
-        if (field == null) {
-            field = collectionFields.get(fieldName);
-        }
-        return field;
-    }
-
-    public EntityDefinition getFieldEntity(String fieldName) {
-        if (singleFields.containsKey(fieldName)
-                || collectionFields.containsKey(fieldName)) {
-            return this;
-        }
-        return parentDefinition != null ? parentDefinition.getFieldEntity(fieldName) : null;
     }
 }

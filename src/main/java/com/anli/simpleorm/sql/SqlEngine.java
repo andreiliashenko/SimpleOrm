@@ -24,7 +24,7 @@ import static com.anli.simpleorm.queries.QueryBuilder.LINKED_KEYS_BINDING;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonMap;
 
-public class SqlEngine {
+public abstract class SqlEngine {
 
     protected final UnitDescriptorManager descriptorManager;
     protected final SqlExecutor executor;
@@ -45,22 +45,6 @@ public class SqlEngine {
         query = resolveQuery(query, parameters);
         List paramList = resolveParameters(query, parameters);
         return getExecutor().executeSelect(query.getQuery(), paramList, handler);
-    }
-
-    protected QueryDescriptor resolveQuery(QueryDescriptor sourceDescriptor,
-            Map<String, Object> parameters) {
-        return sourceDescriptor;
-    }
-
-    protected List resolveParameters(QueryDescriptor query, Map<String, Object> parameters) {
-        Object[] paramArray = new Object[parameters.size()];
-        for (Map.Entry<String, Object> entry : parameters.entrySet()) {
-            String binding = entry.getKey();
-            Object value = entry.getValue();
-            int index = query.getParameterBinding(binding);
-            paramArray[index - 1] = value;
-        }
-        return asList(paramArray);
     }
 
     public <E> void insertAnemicEntity(Object primaryKey, Class<E> entityClass) {
@@ -154,6 +138,11 @@ public class SqlEngine {
         return executor;
     }
 
+    protected abstract QueryDescriptor resolveQuery(QueryDescriptor sourceDescriptor,
+            Map<String, Object> parameters);
+
+    protected abstract List resolveParameters(QueryDescriptor query, Map<String, Object> parameters);
+
     protected class DataRowMapper implements Function<Object, DataRow> {
 
         protected final Map<Object, DataRow> rowMap;
@@ -201,7 +190,7 @@ public class SqlEngine {
             for (FieldDescriptor field : getDescriptor().getSingleFields()) {
                 for (String binding : field.getAllBindings()) {
                     row.put(binding, resultSet.getValue(getQuery().getResultBinding(binding),
-                            field.getFieldClass()));
+                            getDataRowClass(field)));
                 }
             }
             for (EntityDescriptor child : getDescriptor().getChildrenDescriptors()) {
@@ -215,11 +204,19 @@ public class SqlEngine {
             for (FieldDescriptor field : descriptor.getSingleFields()) {
                 String binding = field.getBinding();
                 row.put(binding, resultSet.getValue(getQuery().getResultBinding(binding),
-                        field.getFieldClass()));
+                        getDataRowClass(field)));
             }
             for (EntityDescriptor childDescriptor : descriptor.getChildrenDescriptors()) {
                 populateRowForChild(resultSet, childDescriptor, row);
             }
+        }
+
+        protected Class getDataRowClass(FieldDescriptor field) {
+            Class fieldClass = field.getFieldClass();
+            if (field.isReference()) {
+                return SqlEngine.this.getDescriptor(fieldClass).getPrimaryKeyClass();
+            }
+            return fieldClass;
         }
 
         protected EntityDescriptor getDescriptor() {

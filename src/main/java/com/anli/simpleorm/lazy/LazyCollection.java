@@ -11,7 +11,7 @@ public abstract class LazyCollection<K, V> implements Collection<V> {
     protected final Collection<LazyValue<K, V>> holders;
 
     protected boolean dirty;
-    
+
     protected LazyCollection(Loader<K, V> loader, Collection<K> keys) {
         this.loader = loader;
         holders = getHolderCollection(keys);
@@ -155,7 +155,7 @@ public abstract class LazyCollection<K, V> implements Collection<V> {
     protected LazyIterator getNewIterator() {
         return new LazyIterator(holders.iterator());
     }
-    
+
     public ArrayList<K> getKeys() {
         ArrayList<K> list = new ArrayList<>(holders.size());
         for (LazyValue<K, V> holder : holders) {
