@@ -1,5 +1,6 @@
 package com.anli.simpleorm.definitions;
 
+import com.anli.simpleorm.controller.PrimaryKeyGenerator;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
@@ -10,6 +11,7 @@ public class EntityDefinition {
 
     protected final Class entityClass;
     protected String primaryKeyName;
+    protected final PrimaryKeyGenerator primaryKeyGenerator;
     protected final String name;
     protected String table;
     protected EntityDefinition parentDefinition;
@@ -17,9 +19,10 @@ public class EntityDefinition {
     protected final Map<String, FieldDefinition> singleFields;
     protected final Map<String, CollectionDefinition> collectionFields;
 
-    public EntityDefinition(Class entityClass, String name) {
+    public EntityDefinition(Class entityClass, String name, PrimaryKeyGenerator primaryKeyGenerator) {
         this.entityClass = entityClass;
         this.name = name;
+        this.primaryKeyGenerator = primaryKeyGenerator;
         this.singleFields = new HashMap<>();
         this.collectionFields = new HashMap<>();
         this.childrenDefinitions = new LinkedList<>();

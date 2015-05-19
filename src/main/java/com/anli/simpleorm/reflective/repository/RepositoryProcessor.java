@@ -10,6 +10,10 @@ public class RepositoryProcessor extends EntityProcessor {
         super(entityClass, proxyClass, handlerData);
     }
 
+    public RepositoryProcessor(Class entityClass) {
+        this(entityClass, null, null);
+    }
+
     public void markLazyCollection(Object entity, String field) {
         ((RepositoryMethodHandler) getHandler(entity)).setLazyCollectionClean(field);
     }
