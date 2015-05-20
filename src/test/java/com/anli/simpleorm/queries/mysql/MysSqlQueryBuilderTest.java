@@ -24,7 +24,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testConcreteSelectQuery() {
-        EntityDefinition definition = getConcreteADefinition();
+        EntityDefinition definition = getConcreteADefinition(null);
         QueryDescriptor query = queryBuilder.buildSelectEntityQuery(definition);
         Map<String, String> columnFields = new HashMap<>();
         columnFields.put("id", "concretea.concrete_a_id as concretea_id");
@@ -46,7 +46,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testConcreteSelectByKeysQuery() {
-        EntityDefinition definition = getConcreteBDefinition();
+        EntityDefinition definition = getConcreteBDefinition(null);
         QueryDescriptor query = queryBuilder.buildSelectEntitiesByKeysQuery(definition);
         Map<String, String> columnFields = new HashMap<>();
         columnFields.put("id", "concreteb.concrete_b_id as concreteb_id");
@@ -68,7 +68,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testConcreteInsertFullQuery() {
-        EntityDefinition definition = getConcreteADefinition();
+        EntityDefinition definition = getConcreteADefinition(null);
         List<QueryDescriptor> queries = queryBuilder.buildInsertFullEntityQueries(definition);
         assertEquals(1, queries.size());
         QueryDescriptor query = queries.iterator().next();
@@ -91,7 +91,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testConcreteInsertAnemicQuery() {
-        EntityDefinition definition = getConcreteBDefinition();
+        EntityDefinition definition = getConcreteBDefinition(null);
         List<QueryDescriptor> queries = queryBuilder.buildInsertAnemicEntityQueries(definition);
         assertEquals(1, queries.size());
         QueryDescriptor query = queries.iterator().next();
@@ -103,7 +103,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testConcreteUpdateQuery() {
-        EntityDefinition definition = getConcreteADefinition();
+        EntityDefinition definition = getConcreteADefinition(null);
         QueryDescriptor query = queryBuilder.buildUpdateEntityQuery(definition);
         Map<String, String> columnFields = new HashMap<>();
         columnFields.put("time", "concretea.time_field");
@@ -128,7 +128,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testConcreteDeleteQuery() {
-        EntityDefinition definition = getConcreteBDefinition();
+        EntityDefinition definition = getConcreteBDefinition(null);
         QueryDescriptor query = queryBuilder.buildDeleteEntityQuery(definition);
         String etalonQuery = "delete concreteb from concretes_b as concreteb "
                 + "where concreteb.concrete_b_id = ?";
@@ -138,7 +138,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testSelectCollectionQuery() {
-        EntityDefinition definition = getConcreteADefinition();
+        EntityDefinition definition = getConcreteADefinition(null);
         CollectionDefinition field = definition.getCollectionField("atomicSet");
         QueryDescriptor query = queryBuilder.buildSelectCollectionKeysQuery(field);
         String etalonQuery = "select distinct atomic.atomic_id as atomic_id"
@@ -150,7 +150,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testSelectListQuery() {
-        EntityDefinition definition = getConcreteBDefinition();
+        EntityDefinition definition = getConcreteBDefinition(null);
         CollectionDefinition field = definition.getCollectionField("atomicList");
         QueryDescriptor query = queryBuilder.buildSelectCollectionKeysQuery(field);
         String etalonQuery = "select distinct atomic.atomic_id as atomic_id"
@@ -162,7 +162,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testLinkCollectionQuery() {
-        EntityDefinition definition = getConcreteADefinition();
+        EntityDefinition definition = getConcreteADefinition(null);
         CollectionDefinition field = definition.getCollectionField("atomicSet");
         QueryDescriptor query = queryBuilder.buildLinkCollectionQuery(field);
         String etalonQuery = "update atomics as atomic set atomic.a_ref = ?"
@@ -184,7 +184,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testLinkListQuery() {
-        EntityDefinition definition = getConcreteBDefinition();
+        EntityDefinition definition = getConcreteBDefinition(null);
         CollectionDefinition field = definition.getCollectionField("atomicList");
         QueryDescriptor query = queryBuilder.buildLinkCollectionQuery(field);
         String etalonQuery = "update atomics as atomic join (${ordering}) ordering_subquery "
@@ -210,7 +210,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testUnlinkCollectionQuery() {
-        EntityDefinition definition = getConcreteADefinition();
+        EntityDefinition definition = getConcreteADefinition(null);
         CollectionDefinition field = definition.getCollectionField("atomicSet");
         QueryDescriptor query = queryBuilder.buildUnlinkCollectionQuery(field);
         String etalonQuery = "update atomics as atomic set atomic.a_ref = null"
@@ -232,7 +232,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testUnlinkListQuery() {
-        EntityDefinition definition = getConcreteBDefinition();
+        EntityDefinition definition = getConcreteBDefinition(null);
         CollectionDefinition field = definition.getCollectionField("atomicList");
         QueryDescriptor query = queryBuilder.buildUnlinkCollectionQuery(field);
         String etalonQuery = "update atomics as atomic "
@@ -256,7 +256,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testClearCollectionQuery() {
-        EntityDefinition definition = getConcreteADefinition();
+        EntityDefinition definition = getConcreteADefinition(null);
         CollectionDefinition field = definition.getCollectionField("atomicSet");
         QueryDescriptor query = queryBuilder.buildClearCollectionQuery(field);
         String etalonQuery = "update atomics as atomic set atomic.a_ref = null"
@@ -267,7 +267,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testClearListQuery() {
-        EntityDefinition definition = getConcreteBDefinition();
+        EntityDefinition definition = getConcreteBDefinition(null);
         CollectionDefinition field = definition.getCollectionField("atomicList");
         QueryDescriptor query = queryBuilder.buildClearCollectionQuery(field);
         String etalonQuery = "update atomics as atomic "
@@ -279,7 +279,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testRootSelectQuery() {
-        EntityDefinition definition = getRootDefinition();
+        EntityDefinition definition = getRootDefinition(null);
         QueryDescriptor query = queryBuilder.buildSelectEntityQuery(definition);
         List<String> columns = new ArrayList<>(3);
         columns.add("root.root_id as root_id");
@@ -328,7 +328,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testSuperSelectByKeysQuery() {
-        EntityDefinition definition = getRootDefinition();
+        EntityDefinition definition = getRootDefinition(null);
         List<String> columns = new ArrayList<>(3);
         columns.add("root.root_id as root_id");
         EntityDefinition superDef = definition.getChildrenDefinitions().iterator().next();
@@ -377,7 +377,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testSuperUpdateQuery() {
-        EntityDefinition definition = getRootDefinition();
+        EntityDefinition definition = getRootDefinition(null);
         EntityDefinition superDef = definition.getChildrenDefinitions().iterator().next();
         String etalonQuery = "update supers as super join roots as root "
                 + "on super.super_id = root.root_id "
@@ -390,7 +390,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testSuperDeleteQuery() {
-        EntityDefinition definition = getRootDefinition();
+        EntityDefinition definition = getRootDefinition(null);
         EntityDefinition superDef = definition.getChildrenDefinitions().iterator().next();
         String etalonQuery = "delete root, super from supers as super join roots as root "
                 + "on super.super_id = root.root_id "
@@ -402,7 +402,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testSuperInsertFullQuery() {
-        EntityDefinition definition = getRootDefinition()
+        EntityDefinition definition = getRootDefinition(null)
                 .getChildrenDefinitions().iterator().next();
         List<QueryDescriptor> queries = queryBuilder.buildInsertFullEntityQueries(definition);
         assertEquals(2, queries.size());
@@ -428,7 +428,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testSuperInsertAnemicQuery() {
-        EntityDefinition definition = getRootDefinition()
+        EntityDefinition definition = getRootDefinition(null)
                 .getChildrenDefinitions().iterator().next();
         List<QueryDescriptor> queries = queryBuilder.buildInsertAnemicEntityQueries(definition);
         assertEquals(2, queries.size());
@@ -444,7 +444,7 @@ public class MysSqlQueryBuilderTest {
 
     @Test
     public void testSuperSelectExistingKeysQuery() {
-        EntityDefinition definition = getRootDefinition()
+        EntityDefinition definition = getRootDefinition(null)
                 .getChildrenDefinitions().iterator().next();
         QueryDescriptor query = queryBuilder.buildSelectExistingKeysQuery(definition);
         String etalonQuery = "select distinct super.super_id as super_id"

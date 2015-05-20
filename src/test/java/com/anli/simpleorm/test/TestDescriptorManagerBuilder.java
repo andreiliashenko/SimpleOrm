@@ -1,5 +1,6 @@
 package com.anli.simpleorm.test;
 
+import com.anli.simpleorm.controller.PrimaryKeyGenerator;
 import com.anli.simpleorm.test.entities.Atomic;
 import com.anli.simpleorm.test.entities.ConcreteB;
 import com.anli.simpleorm.test.entities.Root;
@@ -38,7 +39,6 @@ import static com.anli.simpleorm.test.MockMySqlQueries.SELECT_ROOT_EXISTENT_KEYS
 import static com.anli.simpleorm.test.MockMySqlQueries.UNLINK_ATOMIC_LIST_MAIN;
 import static com.anli.simpleorm.test.MockMySqlQueries.UNLINK_ATOMIC_SET_MAIN;
 import static com.anli.simpleorm.test.MockMySqlQueries.UPDATE_SUPER;
-import static com.anli.simpleorm.test.TestKeyGenerator.GENERATOR;
 import static com.anli.simpleorm.test.TestRepositoryProcessorBuilder.getAtomicProcessor;
 import static com.anli.simpleorm.test.TestRepositoryProcessorBuilder.getConcreteAProcessor;
 import static com.anli.simpleorm.test.TestRepositoryProcessorBuilder.getConcreteBProcessor;
@@ -89,8 +89,8 @@ public class TestDescriptorManagerBuilder {
                 List.class, Atomic.class, atomicListQueries, true);
     }
 
-    protected static EntityDescriptor getConcreteADescriptor() throws NoSuchFieldException,
-            NoSuchMethodException {
+    protected static EntityDescriptor getConcreteADescriptor(PrimaryKeyGenerator generator)
+            throws NoSuchFieldException, NoSuchMethodException {
         FieldDescriptor idField = new FieldDescriptor("id", "ConcreteA.id",
                 asList("Super.id", "Root.id"), BigInteger.class);
         FieldDescriptor numberField = new FieldDescriptor("number", "Super.number",
@@ -100,7 +100,7 @@ public class TestDescriptorManagerBuilder {
         FieldDescriptor atomicField = new FieldDescriptor("atomic", "ConcreteA.atomic",
                 (List) emptyList(), Atomic.class, true, true);
         FieldDescriptor atomicSet = getAtomicSetDescriptor();
-        EntityDescriptor descriptor = new EntityDescriptor(ConcreteA.class, GENERATOR,
+        EntityDescriptor descriptor = new EntityDescriptor(ConcreteA.class, generator,
                 getConcreteAProcessor(concreteAProxy), null);
         descriptor.addPrimaryKey(idField);
         descriptor.addField(numberField);
@@ -110,8 +110,8 @@ public class TestDescriptorManagerBuilder {
         return descriptor;
     }
 
-    protected static EntityDescriptor getConcreteBDescriptor() throws NoSuchFieldException,
-            NoSuchMethodException {
+    protected static EntityDescriptor getConcreteBDescriptor(PrimaryKeyGenerator generator)
+            throws NoSuchFieldException, NoSuchMethodException {
         FieldDescriptor idField = new FieldDescriptor("id", "ConcreteB.id",
                 asList("Super.id", "Root.id"), BigInteger.class);
         FieldDescriptor numberField = new FieldDescriptor("number", "Super.number",
@@ -121,7 +121,7 @@ public class TestDescriptorManagerBuilder {
         FieldDescriptor atomicField = new FieldDescriptor("atomic", "ConcreteB.atomic",
                 (List) emptyList(), Atomic.class, true, false);
         FieldDescriptor atomicList = getAtomicListDescriptor();
-        EntityDescriptor descriptor = new EntityDescriptor(ConcreteB.class, GENERATOR,
+        EntityDescriptor descriptor = new EntityDescriptor(ConcreteB.class, generator,
                 getConcreteBProcessor(concreteBProxy), null);
         descriptor.addPrimaryKey(idField);
         descriptor.addField(numberField);
@@ -131,7 +131,8 @@ public class TestDescriptorManagerBuilder {
         return descriptor;
     }
 
-    protected static EntityDescriptor getAtomicDescriptor() throws NoSuchFieldException {
+    protected static EntityDescriptor getAtomicDescriptor(PrimaryKeyGenerator generator)
+            throws NoSuchFieldException {
         EntityQuerySet querySet = new EntityQuerySet();
         Map<String, String> resultBinding = new HashMap<>();
         resultBinding.put("Atomic.id", "atomic_id");
@@ -144,15 +145,15 @@ public class TestDescriptorManagerBuilder {
                 (List) emptyList(), BigInteger.class);
         FieldDescriptor nameField = new FieldDescriptor("name", "Atomic.name",
                 (List) emptyList(), String.class);
-        EntityDescriptor descriptor = new EntityDescriptor(Atomic.class, GENERATOR,
+        EntityDescriptor descriptor = new EntityDescriptor(Atomic.class, generator,
                 getAtomicProcessor(), querySet);
         descriptor.addPrimaryKey(idField);
         descriptor.addField(nameField);
         return descriptor;
     }
 
-    protected static EntityDescriptor getSuperDescriptor() throws NoSuchFieldException,
-            NoSuchMethodException {
+    protected static EntityDescriptor getSuperDescriptor(PrimaryKeyGenerator generator)
+            throws NoSuchFieldException, NoSuchMethodException {
         EntityQuerySet querySet = new EntityQuerySet();
         Map<String, Integer> paramBindings = new HashMap<>();
         paramBindings.put("Super.id", 2);
@@ -167,16 +168,17 @@ public class TestDescriptorManagerBuilder {
                 asList("Root.id"), BigInteger.class);
         FieldDescriptor numberField = new FieldDescriptor("number", "Atomic.name",
                 (List) emptyList(), BigDecimal.class);
-        EntityDescriptor descriptor = new EntityDescriptor(Super.class, GENERATOR,
+        EntityDescriptor descriptor = new EntityDescriptor(Super.class, generator,
                 getSuperProcessor(), querySet);
         descriptor.addPrimaryKey(idField);
         descriptor.addField(numberField);
-        descriptor.addChildDescriptor(getConcreteADescriptor());
-        descriptor.addChildDescriptor(getConcreteBDescriptor());
+        descriptor.addChildDescriptor(getConcreteADescriptor(generator));
+        descriptor.addChildDescriptor(getConcreteBDescriptor(generator));
         return descriptor;
     }
 
-    protected static EntityDescriptor getRootDescriptor() throws NoSuchFieldException, NoSuchMethodException {
+    protected static EntityDescriptor getRootDescriptor(PrimaryKeyGenerator generator)
+            throws NoSuchFieldException, NoSuchMethodException {
         EntityQuerySet querySet = new EntityQuerySet();
         Map<String, String> resultBindings = new HashMap<>();
         resultBindings.put("Root.id", "root_id");
@@ -196,22 +198,22 @@ public class TestDescriptorManagerBuilder {
                 (Map) emptyMap()));
         FieldDescriptor idField = new FieldDescriptor("id", "Root.id",
                 asList("Root.id"), BigInteger.class);
-        EntityDescriptor descriptor = new EntityDescriptor(Root.class, GENERATOR,
+        EntityDescriptor descriptor = new EntityDescriptor(Root.class, generator,
                 getRootProcessor(), querySet);
         descriptor.addPrimaryKey(idField);
-        descriptor.addChildDescriptor(getSuperDescriptor());
+        descriptor.addChildDescriptor(getSuperDescriptor(generator));
         return descriptor;
     }
 
-    public static UnitDescriptorManager getTestManager() {
+    public static UnitDescriptorManager getTestManager(PrimaryKeyGenerator generator) {
         UnitDescriptorManager manager = new UnitDescriptorManager();
         try {
-            EntityDescriptor root = getRootDescriptor();
+            EntityDescriptor root = getRootDescriptor(generator);
             manager.addDescriptor(root);
             manager.addDescriptor(root.getChildrenDescriptors().get(0));
             manager.addDescriptor(root.getChildrenDescriptors().get(0).getChildrenDescriptors().get(0));
             manager.addDescriptor(root.getChildrenDescriptors().get(0).getChildrenDescriptors().get(1));
-            manager.addDescriptor(getAtomicDescriptor());
+            manager.addDescriptor(getAtomicDescriptor(generator));
         } catch (NoSuchFieldException | NoSuchMethodException ex) {
             throw new RuntimeException(ex);
         }

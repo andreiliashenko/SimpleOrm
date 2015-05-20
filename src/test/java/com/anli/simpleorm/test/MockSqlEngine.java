@@ -1,7 +1,6 @@
 package com.anli.simpleorm.test;
 
 import com.anli.simpleorm.descriptors.CollectionFieldDescriptor;
-import com.anli.simpleorm.descriptors.UnitDescriptorManager;
 import com.anli.simpleorm.queries.QueryDescriptor;
 import com.anli.simpleorm.sql.DataRow;
 import com.anli.simpleorm.sql.SqlEngine;
@@ -10,7 +9,6 @@ import com.anli.simpleorm.test.entities.ConcreteA;
 import com.anli.simpleorm.test.entities.ConcreteB;
 import com.anli.simpleorm.test.entities.Root;
 import com.anli.simpleorm.test.entities.Super;
-import com.anli.sqlexecution.execution.SqlExecutor;
 import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -30,12 +28,22 @@ public class MockSqlEngine extends SqlEngine {
     protected final Map<BigInteger, List<BigInteger>> atomicSetKeys = new HashMap<>();
     protected final Map<BigInteger, List<BigInteger>> atomicListKeys = new HashMap<>();
 
-    public MockSqlEngine(UnitDescriptorManager descriptorManager, SqlExecutor executor) {
+    protected int deletesCount = 0;
+    protected int keyLoadsCount = 0;
+    protected int collectionElementsLoadsCount = 0;
+    protected int collectionKeysLoadsCount = 0;
+    protected int nonexistentKeysCount = 0;
+    protected int insertsCount = 0;
+    protected int linkageQueriesCount = 0;
+    protected int updatesCount = 0;
+
+    public MockSqlEngine() {
         super(null, null);
     }
 
     @Override
     public void delete(Object primaryKey, Class entityClass) {
+        deletesCount++;
         if (Atomic.class.equals(entityClass)) {
             deleteAtomic((BigInteger) primaryKey);
         } else if (ConcreteA.class.equals(entityClass)) {
@@ -86,6 +94,7 @@ public class MockSqlEngine extends SqlEngine {
 
     @Override
     public DataRow getByPrimaryKey(Object primaryKey, Class entityClass) {
+        keyLoadsCount++;
         Map<BigInteger, DataRow> map = getMapForSelect(entityClass);
         return map.get((BigInteger) primaryKey);
     }
@@ -108,6 +117,7 @@ public class MockSqlEngine extends SqlEngine {
 
     @Override
     public Map<Object, DataRow> getCollectionData(Class elementClass, Collection keys) {
+        collectionElementsLoadsCount += keys.size();
         Map<BigInteger, DataRow> dataMap = getMapForSelect(elementClass);
         Map<Object, DataRow> resultMap = new HashMap<>();
         for (Object key : keys) {
@@ -121,6 +131,7 @@ public class MockSqlEngine extends SqlEngine {
 
     @Override
     public List getCollectionKeys(CollectionFieldDescriptor field, Object foreignKey) {
+        collectionKeysLoadsCount++;
         return new ArrayList(getCollectionKeysList(field, foreignKey));
     }
 
@@ -133,8 +144,10 @@ public class MockSqlEngine extends SqlEngine {
         }
         throw new RuntimeException();
     }
+
     @Override
     public Set getNonExistentKeys(Collection primaryKeys, Class entityClass) {
+        nonexistentKeysCount++;
         Set<BigInteger> resultSet = new HashSet<>(primaryKeys);
         resultSet.removeAll(getMapForSelect(entityClass).keySet());
         return resultSet;
@@ -164,32 +177,38 @@ public class MockSqlEngine extends SqlEngine {
     }
 
     protected void insertAtomicPart(BigInteger primaryKey, DataRow row) {
+        insertsCount++;
         row.put("Atomic.id", primaryKey);
         atomicMap.put(primaryKey, row);
     }
 
     protected void insertConcreteAPart(BigInteger primaryKey, DataRow row) {
+        insertsCount++;
         row.put("ConcreteA.id", primaryKey);
         concreteAMap.put(primaryKey, row);
     }
 
     protected void insertConcreteBPart(BigInteger primaryKey, DataRow row) {
+        insertsCount++;
         row.put("ConcreteB.id", primaryKey);
         concreteBMap.put(primaryKey, row);
     }
 
     protected void insertSuperPart(BigInteger primaryKey, DataRow row) {
+        insertsCount++;
         row.put("Super.id", primaryKey);
         superMap.put(primaryKey, row);
     }
 
     protected void insertRootPart(BigInteger primaryKey, DataRow row) {
+        insertsCount++;
         row.put("Root.id", primaryKey);
         rootMap.put(primaryKey, row);
     }
 
     @Override
     public void updateCollectionLinkage(CollectionFieldDescriptor field, Collection keys, Object foreignKey) {
+        linkageQueriesCount++;
         List<BigInteger> collectionKeys = getCollectionKeysList(field, foreignKey);
         collectionKeys.clear();
         collectionKeys.addAll(keys);
@@ -197,6 +216,7 @@ public class MockSqlEngine extends SqlEngine {
 
     @Override
     public void updateEntity(Map<String, Object> parameters, Class entityClass) {
+        updatesCount++;
         String keyName;
         if (Atomic.class.equals(entityClass)) {
             keyName = "Atomic.id";
@@ -228,4 +248,65 @@ public class MockSqlEngine extends SqlEngine {
     protected List resolveParameters(QueryDescriptor query, Map<String, Object> parameters) {
         return null;
     }
+
+    public Map<BigInteger, DataRow> getAtomicMap() {
+        return atomicMap;
+    }
+
+    public Map<BigInteger, DataRow> getConcreteAMap() {
+        return concreteAMap;
+    }
+
+    public Map<BigInteger, DataRow> getConcreteBMap() {
+        return concreteBMap;
+    }
+
+    public Map<BigInteger, DataRow> getSuperMap() {
+        return superMap;
+    }
+
+    public Map<BigInteger, DataRow> getRootMap() {
+        return rootMap;
+    }
+
+    public Map<BigInteger, List<BigInteger>> getAtomicSetKeys() {
+        return atomicSetKeys;
+    }
+
+    public Map<BigInteger, List<BigInteger>> getAtomicListKeys() {
+        return atomicListKeys;
+    }
+
+    public int getDeletesCount() {
+        return deletesCount;
+    }
+
+    public int getKeyLoadsCount() {
+        return keyLoadsCount;
+    }
+
+    public int getCollectionElementsLoadsCount() {
+        return collectionElementsLoadsCount;
+    }
+
+    public int getCollectionKeysLoadsCount() {
+        return collectionKeysLoadsCount;
+    }
+
+    public int getNonexistentKeysCount() {
+        return nonexistentKeysCount;
+    }
+
+    public int getInsertsCount() {
+        return insertsCount;
+    }
+
+    public int getLinkageQueriesCount() {
+        return linkageQueriesCount;
+    }
+
+    public int getUpdatesCount() {
+        return updatesCount;
+    }
+
 }

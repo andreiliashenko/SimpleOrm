@@ -57,7 +57,7 @@ public class MySqlEngineTest {
     @Before
     public void setUp() {
         sqlExecutor = new MockSqlExecutor();
-        UnitDescriptorManager manager = getTestManager();
+        UnitDescriptorManager manager = getTestManager(null);
         engine = new MySqlEngine(manager, sqlExecutor, new MySqlQueryBuilder());
         atomicSetDescriptor = (CollectionFieldDescriptor) manager
                 .getDescriptor(ConcreteA.class).getField("atomicSet");

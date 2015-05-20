@@ -18,4 +18,8 @@ public class DataRow {
     public void put(String key, Object value) {
         map.put(key, value);
     }
+
+    public int size() {
+        return map.size();
+    }
 }

@@ -5,11 +5,9 @@ import java.math.BigInteger;
 
 public class TestKeyGenerator implements PrimaryKeyGenerator {
 
-    public static final TestKeyGenerator GENERATOR = new TestKeyGenerator();
-
     protected volatile BigInteger lastKey;
 
-    private TestKeyGenerator() {
+    public TestKeyGenerator() {
         lastKey = BigInteger.ZERO;
     }
 
