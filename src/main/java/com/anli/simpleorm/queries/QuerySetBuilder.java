@@ -1,6 +1,6 @@
 package com.anli.simpleorm.queries;
 
-import com.anli.simpleorm.definitions.CollectionDefinition;
+import com.anli.simpleorm.definitions.CollectionFieldDefinition;
 import com.anli.simpleorm.definitions.EntityDefinition;
 
 public class QuerySetBuilder {
@@ -23,7 +23,7 @@ public class QuerySetBuilder {
         return querySet;
     }
     
-    public CollectionQuerySet buildCollectionQuerySet(CollectionDefinition definition) {
+    public CollectionQuerySet buildCollectionQuerySet(CollectionFieldDefinition definition) {
         CollectionQuerySet querySet = new CollectionQuerySet();
         querySet.setSelectCollectionKeysQuery(builder.buildSelectCollectionKeysQuery(definition));
         querySet.setLinkCollectionQuery(builder.buildLinkCollectionQuery(definition));

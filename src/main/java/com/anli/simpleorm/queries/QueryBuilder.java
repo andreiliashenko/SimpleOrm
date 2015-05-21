@@ -1,6 +1,6 @@
 package com.anli.simpleorm.queries;
 
-import com.anli.simpleorm.definitions.CollectionDefinition;
+import com.anli.simpleorm.definitions.CollectionFieldDefinition;
 import com.anli.simpleorm.definitions.EntityDefinition;
 import java.util.List;
 
@@ -8,6 +8,7 @@ public interface QueryBuilder {
 
     String FOREIGN_KEY_BINDING = "foreignKey";
     String LINKED_KEYS_BINDING = "linkedKeys";
+    String PARENT_JOIN_KEY_BINDING = "parentJoinKey";
 
     QueryDescriptor buildSelectEntityQuery(EntityDefinition definition);
 
@@ -23,11 +24,11 @@ public interface QueryBuilder {
 
     QueryDescriptor buildDeleteEntityQuery(EntityDefinition definition);
 
-    QueryDescriptor buildSelectCollectionKeysQuery(CollectionDefinition fieldDefinition);
+    QueryDescriptor buildSelectCollectionKeysQuery(CollectionFieldDefinition fieldDefinition);
 
-    QueryDescriptor buildLinkCollectionQuery(CollectionDefinition fieldDefinition);
+    QueryDescriptor buildLinkCollectionQuery(CollectionFieldDefinition fieldDefinition);
 
-    QueryDescriptor buildClearCollectionQuery(CollectionDefinition fieldDefinition);
+    QueryDescriptor buildClearCollectionQuery(CollectionFieldDefinition fieldDefinition);
 
-    QueryDescriptor buildUnlinkCollectionQuery(CollectionDefinition fieldDefinition);
+    QueryDescriptor buildUnlinkCollectionQuery(CollectionFieldDefinition fieldDefinition);
 }

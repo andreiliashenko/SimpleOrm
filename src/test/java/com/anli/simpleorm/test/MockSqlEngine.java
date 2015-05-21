@@ -185,18 +185,21 @@ public class MockSqlEngine extends SqlEngine {
     protected void insertConcreteAPart(BigInteger primaryKey, DataRow row) {
         insertsCount++;
         row.put("ConcreteA.id", primaryKey);
+        row.put("ConcreteA.parentJoinKey", primaryKey);
         concreteAMap.put(primaryKey, row);
     }
 
     protected void insertConcreteBPart(BigInteger primaryKey, DataRow row) {
         insertsCount++;
         row.put("ConcreteB.id", primaryKey);
+        row.put("ConcreteB.parentJoinKey", primaryKey);
         concreteBMap.put(primaryKey, row);
     }
 
     protected void insertSuperPart(BigInteger primaryKey, DataRow row) {
         insertsCount++;
         row.put("Super.id", primaryKey);
+        row.put("Super.parentJoinKey", primaryKey);
         superMap.put(primaryKey, row);
     }
 
@@ -219,13 +222,13 @@ public class MockSqlEngine extends SqlEngine {
         updatesCount++;
         String keyName;
         if (Atomic.class.equals(entityClass)) {
-            keyName = "Atomic.id";
+            keyName = "Root.id";
         } else if (ConcreteA.class.equals(entityClass)) {
-            keyName = "ConcreteA.id";
+            keyName = "Root.id";
         } else if (ConcreteB.class.equals(entityClass)) {
-            keyName = "ConcreteB.id";
+            keyName = "Root.id";
         } else if (Super.class.equals(entityClass)) {
-            keyName = "Super.id";
+            keyName = "Root.id";
         } else if (Root.class.equals(entityClass)) {
             keyName = "Root.id";
         } else {

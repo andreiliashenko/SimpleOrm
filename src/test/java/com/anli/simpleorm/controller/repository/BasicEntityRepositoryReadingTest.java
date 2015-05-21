@@ -1,12 +1,31 @@
 package com.anli.simpleorm.controller.repository;
 
+import com.anli.simpleorm.controller.EntityRepository;
+import com.anli.simpleorm.descriptors.UnitDescriptorManager;
 import com.anli.simpleorm.sql.DataRow;
+import com.anli.simpleorm.test.MockSqlEngine;
+import com.anli.simpleorm.test.TestKeyGenerator;
 import java.math.BigDecimal;
 import java.math.BigInteger;
 import org.joda.time.DateTime;
-import org.junit.Test;
+import org.junit.Before;
 
-public class BasicEntityRepositoryTest_Reading extends BasicEntityRepositoryTest {
+import static com.anli.simpleorm.test.TestDescriptorManagerBuilder.getTestManager;
+
+public class BasicEntityRepositoryReadingTest {
+
+    protected TestKeyGenerator keyGenerator;
+    protected UnitDescriptorManager descriptorManager;
+    protected MockSqlEngine sqlEngine;
+    protected EntityRepository repository;
+
+    @Before
+    public void setUp() {
+        keyGenerator = new TestKeyGenerator();
+        descriptorManager = getTestManager(keyGenerator);
+        sqlEngine = new MockSqlEngine();
+        repository = new BasicEntityRepository(descriptorManager, sqlEngine);
+    }
 
     protected DataRow createAtomicRow(BigInteger id, String name) {
         DataRow row = new DataRow();
@@ -69,11 +88,5 @@ public class BasicEntityRepositoryTest_Reading extends BasicEntityRepositoryTest
         sqlEngine.getRootMap().put(BigInteger.valueOf(8), superB);
         sqlEngine.getSuperMap().put(BigInteger.valueOf(7), superA);
         sqlEngine.getSuperMap().put(BigInteger.valueOf(8), superB);
-    }
-    
-    @Override
-    public void setUp() {
-        super.setUp();
-
     }
 }

@@ -69,21 +69,21 @@ public class MySqlEngineTest {
     public void testGetByPrimaryKey_shouldReturnRow() {
         MockRow mockRow = new MockRow();
         mockRow.add("root_id", BigInteger.valueOf(1));
-        mockRow.add("super_id", BigInteger.valueOf(1));
+        mockRow.add("super_parent_join_key", BigInteger.valueOf(1));
         mockRow.add("super_number", BigDecimal.valueOf(100));
-        mockRow.add("concretea_id", BigInteger.valueOf(1));
+        mockRow.add("concretea_parent_join_key", BigInteger.valueOf(1));
         mockRow.add("concretea_time", new DateTime(2015, 5, 19, 0, 0));
         mockRow.add("concretea_atomic", BigInteger.valueOf(5));
         sqlExecutor.bindResult(SELECT_ROOT_BY_PRIMARY_KEY,
                 asList(BigInteger.valueOf(1)), asList(mockRow));
         DataRow row = engine.getByPrimaryKey(BigInteger.valueOf(1), Root.class);
         assertEquals(BigInteger.valueOf(1), row.get("Root.id"));
-        assertEquals(BigInteger.valueOf(1), row.get("Super.id"));
+        assertEquals(BigInteger.valueOf(1), row.get("Super.parentJoinKey"));
         assertEquals(BigDecimal.valueOf(100), row.get("Super.number"));
-        assertEquals(BigInteger.valueOf(1), row.get("ConcreteA.id"));
+        assertEquals(BigInteger.valueOf(1), row.get("ConcreteA.parentJoinKey"));
         assertEquals(new DateTime(2015, 5, 19, 0, 0), row.get("ConcreteA.time"));
         assertEquals(BigInteger.valueOf(5), row.get("ConcreteA.atomic"));
-        assertNull(row.get("ConcreteB.id"));
+        assertNull(row.get("ConcreteB.parentJoinKey"));
         assertNull(row.get("ConcreteB.name"));
         assertNull(row.get("ConcreteB.atomic"));
     }
@@ -236,7 +236,7 @@ public class MySqlEngineTest {
     @Test
     public void testUpdateEntity_shouldDoUpdate() {
         Map<String, Object> paramMap = new HashMap<>();
-        paramMap.put("Super.id", BigInteger.valueOf(1));
+        paramMap.put("Root.id", BigInteger.valueOf(1));
         paramMap.put("Super.number", BigDecimal.valueOf(100));
         engine.updateEntity(paramMap, Super.class);
         List<MockQueryKey> updates = sqlExecutor.getExecutedUpdates();

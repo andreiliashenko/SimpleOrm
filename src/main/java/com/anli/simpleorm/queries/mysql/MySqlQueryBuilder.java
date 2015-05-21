@@ -1,9 +1,9 @@
 package com.anli.simpleorm.queries.mysql;
 
-import com.anli.simpleorm.definitions.CollectionDefinition;
+import com.anli.simpleorm.definitions.CollectionFieldDefinition;
 import com.anli.simpleorm.definitions.EntityDefinition;
 import com.anli.simpleorm.definitions.FieldDefinition;
-import com.anli.simpleorm.definitions.ListDefinition;
+import com.anli.simpleorm.definitions.ListFieldDefinition;
 import com.anli.simpleorm.queries.QueryBuilder;
 import com.anli.simpleorm.queries.QueryDescriptor;
 import java.util.Collection;
@@ -17,6 +17,9 @@ import java.util.TreeMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
+
 public class MySqlQueryBuilder implements QueryBuilder {
 
     protected static final Pattern MACRO_PATTERN = Pattern.compile("\\$\\{[^\\$]*\\}");
@@ -25,46 +28,38 @@ public class MySqlQueryBuilder implements QueryBuilder {
     protected static final String LIST_MACRO = "${list}";
     protected static final String KEY_COLUMN = "key_column";
     protected static final String ORDER_COLUMN = "order_column";
+    protected static final String PARENT_JOIN_COLUMN = "parent_join_key";
 
     @Override
     public QueryDescriptor buildSelectEntityQuery(EntityDefinition definition) {
         StringBuilder query = new StringBuilder();
-        FieldDefinition primaryKey = definition.getPrimaryKey();
-        String primaryKeyName = primaryKey.getName();
-        Map<String, Integer> parameterBindings =
-                Collections.singletonMap(definition.getName() + "." + primaryKeyName, 1);
         Map<String, String> resultBindings = new HashMap<>();
         appendSelectFromClause(query, definition, resultBindings);
         query.append(" ");
-        appendWherePrimaryKeyClause(query, definition);
+        Map<String, Integer> parameterBindings = new HashMap<>();
+        appendWherePrimaryKeyClause(query, definition, parameterBindings, 1);
         return new QueryDescriptor(query.toString(), parameterBindings, resultBindings);
     }
 
     @Override
     public QueryDescriptor buildSelectEntitiesByKeysQuery(EntityDefinition definition) {
         StringBuilder query = new StringBuilder();
-        FieldDefinition primaryKey = definition.getPrimaryKey();
-        String primaryKeyName = primaryKey.getName();
-        Map<String, Integer> parameterBindings =
-                Collections.singletonMap(definition.getName() + "." + primaryKeyName, 1);
         Map<String, String> resultBindings = new HashMap<>();
+        Map<String, Integer> parameterBindings = new HashMap<>();
         appendSelectFromClause(query, definition, resultBindings);
         query.append(" ");
-        appendWherePrimaryKeyInListMacro(query, definition);
+        appendWherePrimaryKeyInListMacro(query, definition, parameterBindings, 1);
         return new QueryDescriptor(query.toString(), parameterBindings, resultBindings);
     }
 
     @Override
     public QueryDescriptor buildSelectExistingKeysQuery(EntityDefinition definition) {
         StringBuilder query = new StringBuilder();
-        FieldDefinition primaryKey = definition.getPrimaryKey();
-        String primaryKeyName = primaryKey.getName();
-        Map<String, Integer> parameterBindings =
-                Collections.singletonMap(definition.getName() + "." + primaryKeyName, 1);
         Map<String, String> resultBindings = new HashMap<>();
+        Map<String, Integer> parameterBindings = new HashMap<>();
         appendSelectFromKeysClause(query, definition, resultBindings);
         query.append(" ");
-        appendWherePrimaryKeyInListMacro(query, definition);
+        appendWherePrimaryKeyInListMacro(query, definition, parameterBindings, 1);
         return new QueryDescriptor(query.toString(), parameterBindings, resultBindings);
     }
 
@@ -72,14 +67,15 @@ public class MySqlQueryBuilder implements QueryBuilder {
     public List<QueryDescriptor> buildInsertFullEntityQueries(EntityDefinition definition) {
         LinkedList<QueryDescriptor> queryList = new LinkedList<>();
         EntityDefinition currentDefinition = definition;
+        EntityDefinition root = definition.getRootDefinition();
+        FieldDefinition primaryKey = root.getPrimaryKey();
+        String primaryKeyBinding = root.getName() + "." + primaryKey.getName();
         while (currentDefinition != null) {
             StringBuilder query = new StringBuilder();
             Map<String, Integer> parameterBindings = new HashMap<>();
-            int keyBinding = appendFullInsertClause(query, currentDefinition, parameterBindings);
-            parameterBindings.put(definition.getName() + "." + definition.getPrimaryKey().getName(),
-                    keyBinding);
+            appendFullInsertQuery(query, currentDefinition, parameterBindings, primaryKeyBinding);
             queryList.addFirst(new QueryDescriptor(query.toString(), parameterBindings,
-                    Collections.<String, String>emptyMap()));
+                    (Map) emptyMap()));
             currentDefinition = currentDefinition.getParentDefinition();
         }
         return queryList;
@@ -89,15 +85,15 @@ public class MySqlQueryBuilder implements QueryBuilder {
     public List<QueryDescriptor> buildInsertAnemicEntityQueries(EntityDefinition definition) {
         LinkedList<QueryDescriptor> queryList = new LinkedList<>();
         EntityDefinition currentDefinition = definition;
-        String primaryKeyName = definition.getPrimaryKey().getName();
+        EntityDefinition root = definition.getRootDefinition();
+        FieldDefinition primaryKey = root.getPrimaryKey();
+        String primaryKeyBinding = root.getName() + "." + primaryKey.getName();
         while (currentDefinition != null) {
             StringBuilder query = new StringBuilder();
-
-            Map<String, Integer> parameterBindings =
-                    Collections.singletonMap(definition.getName() + "." + primaryKeyName, 1);
-            appendFullAnemicInsertClause(query, currentDefinition);
+            Map<String, Integer> parameterBindings = new HashMap<>();
+            appendFullAnemicInsertClause(query, currentDefinition, parameterBindings, primaryKeyBinding);
             queryList.addFirst(new QueryDescriptor(query.toString(), parameterBindings,
-                    Collections.<String, String>emptyMap()));
+                    (Map) emptyMap()));
             currentDefinition = currentDefinition.getParentDefinition();
         }
         return queryList;
@@ -112,11 +108,9 @@ public class MySqlQueryBuilder implements QueryBuilder {
         int lastIndex = appendSetFieldList(query, definition, parameterBindings, 0);
         query.append(" ");
         lastIndex++;
-        parameterBindings.put(definition.getName() + "."
-                + definition.getPrimaryKey().getName(), lastIndex);
-        appendWherePrimaryKeyClause(query, definition);
+        appendWherePrimaryKeyClause(query, definition, parameterBindings, lastIndex);
         return new QueryDescriptor(query.toString(), parameterBindings,
-                Collections.<String, String>emptyMap());
+                (Map) emptyMap());
     }
 
     @Override
@@ -124,35 +118,34 @@ public class MySqlQueryBuilder implements QueryBuilder {
         StringBuilder query = new StringBuilder();
         appendFullDeleteClause(query, definition);
         query.append(" ");
-        appendWherePrimaryKeyClause(query, definition);
-        return new QueryDescriptor(query.toString(),
-                Collections.singletonMap(definition.getName() + "."
-                        + definition.getPrimaryKey().getName(), 1),
-                Collections.<String, String>emptyMap());
+        Map<String, Integer> parameterBindings = new HashMap<>();
+        appendWherePrimaryKeyClause(query, definition, parameterBindings, 1);
+        return new QueryDescriptor(query.toString(), parameterBindings,
+                (Map) emptyMap());
     }
 
     @Override
-    public QueryDescriptor buildSelectCollectionKeysQuery(CollectionDefinition fieldDefinition) {
+    public QueryDescriptor buildSelectCollectionKeysQuery(CollectionFieldDefinition fieldDefinition) {
         StringBuilder query = new StringBuilder();
         Map<String, String> resultBindings = new HashMap<>();
-        EntityDefinition referenceDefinition = fieldDefinition.getReferencedEntity();
+        EntityDefinition referenceDefinition = fieldDefinition.getReferencedDefinition();
         appendSelectFromKeysClause(query, referenceDefinition, resultBindings);
         query.append(" ");
         appendWhereForeignKeyClause(query, fieldDefinition);
-        if (fieldDefinition instanceof ListDefinition) {
+        if (fieldDefinition instanceof ListFieldDefinition) {
             query.append(" ");
-            appendOrderByClause(query, (ListDefinition) fieldDefinition);
+            appendOrderByClause(query, (ListFieldDefinition) fieldDefinition);
         }
         return new QueryDescriptor(query.toString(),
-                Collections.singletonMap(FOREIGN_KEY_BINDING, 1), resultBindings);
+                singletonMap(FOREIGN_KEY_BINDING, 1), resultBindings);
     }
 
     @Override
-    public QueryDescriptor buildLinkCollectionQuery(CollectionDefinition fieldDefinition) {
+    public QueryDescriptor buildLinkCollectionQuery(CollectionFieldDefinition fieldDefinition) {
         StringBuilder query = new StringBuilder();
         Map<String, Integer> parameterBindings = new HashMap<>();
-        if (fieldDefinition instanceof ListDefinition) {
-            appendLinkListQueryMacro(query, (ListDefinition) fieldDefinition);
+        if (fieldDefinition instanceof ListFieldDefinition) {
+            appendLinkListQueryMacro(query, (ListFieldDefinition) fieldDefinition);
             parameterBindings.put(LINKED_KEYS_BINDING, 1);
             parameterBindings.put(FOREIGN_KEY_BINDING, 2);
         } else {
@@ -165,31 +158,30 @@ public class MySqlQueryBuilder implements QueryBuilder {
     }
 
     @Override
-    public QueryDescriptor buildClearCollectionQuery(CollectionDefinition fieldDefinition) {
+    public QueryDescriptor buildClearCollectionQuery(CollectionFieldDefinition fieldDefinition) {
         String query = buildUnlinkCollectionQuery(fieldDefinition, true);
-        return new QueryDescriptor(query, Collections.singletonMap(FOREIGN_KEY_BINDING, 1),
-                Collections.<String, String>emptyMap());
+        return new QueryDescriptor(query, singletonMap(FOREIGN_KEY_BINDING, 1),
+                (Map) emptyMap());
     }
 
     @Override
-    public QueryDescriptor buildUnlinkCollectionQuery(CollectionDefinition fieldDefinition) {
+    public QueryDescriptor buildUnlinkCollectionQuery(CollectionFieldDefinition fieldDefinition) {
         String query = buildUnlinkCollectionQuery(fieldDefinition, false);
         Map<String, Integer> parametersBinding = new HashMap<>();
         parametersBinding.put(FOREIGN_KEY_BINDING, 1);
         parametersBinding.put(LINKED_KEYS_BINDING, 2);
-        return new QueryDescriptor(query, parametersBinding,
-                Collections.<String, String>emptyMap());
+        return new QueryDescriptor(query, parametersBinding, (Map) emptyMap());
     }
 
-    protected String buildUnlinkCollectionQuery(CollectionDefinition fieldDefinition, boolean isEmpty) {
+    protected String buildUnlinkCollectionQuery(CollectionFieldDefinition fieldDefinition, boolean isEmpty) {
         StringBuilder query = new StringBuilder();
-        query.append("update ").append(fieldDefinition.getReferencedEntity().getTable())
-                .append(" as ").append(fieldDefinition.getReferencedEntity().getName().toLowerCase());
+        query.append("update ").append(fieldDefinition.getReferencedDefinition().getTable())
+                .append(" as ").append(fieldDefinition.getReferencedDefinition().getName().toLowerCase());
         query.append(" ");
         appendSetClearedForeignKeys(query, fieldDefinition);
-        if (fieldDefinition instanceof ListDefinition) {
+        if (fieldDefinition instanceof ListFieldDefinition) {
             query.append(", ");
-            appendSetClearedOrdering(query, (ListDefinition) fieldDefinition);
+            appendSetClearedOrdering(query, (ListFieldDefinition) fieldDefinition);
         }
         query.append(" ");
         appendUnlinkCollectionWhereClauseMacro(query, fieldDefinition, isEmpty);
@@ -211,45 +203,56 @@ public class MySqlQueryBuilder implements QueryBuilder {
 
     protected void appendSelectFromKeysClause(StringBuilder query, EntityDefinition definition,
             Map<String, String> resultBindings) {
-        String aliasName = definition.getName().toLowerCase();
-        String primaryKeyName = definition.getPrimaryKey().getName();
-        String primaryKeyColumn = definition.getPrimaryKey().getColumn();
+        EntityDefinition root = definition.getRootDefinition();
+        String aliasName = root.getName().toLowerCase();
+        String primaryKeyName = root.getPrimaryKey().getName();
+        String primaryKeyColumn = root.getPrimaryKey().getColumn();
         String columnAlias = aliasName + "_" + primaryKeyName;
         String columnName = aliasName + "." + primaryKeyColumn;
-        resultBindings.put(definition.getName() + "." + primaryKeyName, columnAlias);
+        resultBindings.put(root.getName() + "." + primaryKeyName, columnAlias);
         query.append("select distinct ");
         query.append(columnName).append(" as ").append(columnAlias);
         query.append(" ");
-        query.append("from ").append(definition.getTable()).append(" as ")
-                .append(aliasName);
+        appendFullFromClause(query, definition, false);
     }
 
     protected void appendFieldList(StringBuilder query, EntityDefinition definition,
             Map<String, String> resultBindings, boolean withChildren, boolean withParent) {
         boolean isCommaNeeded = false;
-        if (definition.getParentDefinition() != null && withParent) {
-            appendFieldList(query, definition.getParentDefinition(), resultBindings, false, true);
+        EntityDefinition parentDefinition = definition.getParentDefinition();
+        boolean hasParent = parentDefinition != null;
+        if (hasParent && withParent) {
+            appendFieldList(query, parentDefinition, resultBindings, false, true);
             isCommaNeeded = true;
         }
-        String aliasName = definition.getName().toLowerCase();
+        String tableAlias = definition.getName().toLowerCase();
+        if (hasParent) {
+            if (isCommaNeeded) {
+                query.append(", ");
+            } else {
+                isCommaNeeded = true;
+            }
+            String fieldAlias = tableAlias + "_" + PARENT_JOIN_COLUMN;
+            query.append(tableAlias).append(".").append(definition.getParentJoinColumn())
+                    .append(" as ").append(fieldAlias);
+            String fieldBinding = definition.getName() + "." + PARENT_JOIN_KEY_BINDING;
+            resultBindings.put(fieldBinding, fieldAlias);
+        }
         for (FieldDefinition field : definition.getSingleFields()) {
             if (isCommaNeeded) {
                 query.append(", ");
             } else {
                 isCommaNeeded = true;
             }
-            StringBuilder element = new StringBuilder();
-            String fieldAlias = aliasName + "_" + field.getName();
-            element.append(aliasName).append(".").append(field.getColumn())
+            String fieldAlias = tableAlias + "_" + field.getName();
+            query.append(tableAlias).append(".").append(field.getColumn())
                     .append(" as ").append(fieldAlias);
             String fieldBinding = definition.getName() + "." + field.getName();
             resultBindings.put(fieldBinding, fieldAlias);
-            query.append(element);
         }
         if (!withChildren) {
             return;
         }
-
         for (EntityDefinition child : definition.getChildrenDefinitions()) {
             if (isCommaNeeded) {
                 query.append(", ");
@@ -267,38 +270,45 @@ public class MySqlQueryBuilder implements QueryBuilder {
         appendJoinClauses(query, definition, withChildren, true);
     }
 
-    protected void appendFullAnemicInsertClause(StringBuilder query, EntityDefinition definition) {
+    protected void appendFullAnemicInsertClause(StringBuilder query, EntityDefinition definition,
+            Map<String, Integer> parameterBindings, String primaryKeyBinding) {
         query.append("insert into ").append(definition.getTable()).append(" (");
-        query.append(definition.getPrimaryKey().getColumn());
+        String column = getPrimaryColumn(definition);
+        query.append(column);
         query.append(") values (?)");
+        parameterBindings.put(primaryKeyBinding, 1);
     }
 
-    protected int appendFullInsertClause(StringBuilder query, EntityDefinition definition,
-            Map<String, Integer> parameterBindings) {
+    protected void appendFullInsertQuery(StringBuilder query, EntityDefinition definition,
+            Map<String, Integer> parameterBindings, String primaryKeyBinding) {
         query.append("insert into ").append(definition.getTable()).append(" (");
-        int primaryKeyIndex = 0;
         int fieldCount = 0;
+        if (definition.getParentDefinition() != null) {
+            String joinColumn = definition.getParentJoinColumn();
+            fieldCount++;
+            query.append(joinColumn);
+            parameterBindings.put(primaryKeyBinding, fieldCount);
+        }
         for (FieldDefinition field : definition.getSingleFields()) {
             if (fieldCount > 0) {
                 query.append(", ");
             }
             fieldCount++;
             query.append(field.getColumn());
-            if (!field.getName().equals(definition.getPrimaryKey().getName())) {
-                parameterBindings.put(definition.getName() + "." + field.getName(), fieldCount);
-            } else {
-                primaryKeyIndex = fieldCount;
-            }
+            parameterBindings.put(definition.getName() + "." + field.getName(), fieldCount);
         }
         query.append(") values (");
         query.append(buildParametersList(fieldCount));
         query.append(")");
-        return primaryKeyIndex;
     }
 
-    protected void appendWherePrimaryKeyClause(StringBuilder query, EntityDefinition definition) {
-        query.append("where ").append(definition.getName().toLowerCase())
-                .append(".").append(definition.getPrimaryKey().getColumn()).append(" = ?");
+    protected void appendWherePrimaryKeyClause(StringBuilder query,
+            EntityDefinition definition, Map<String, Integer> parameterBindings, int parameterIndex) {
+        EntityDefinition root = definition.getRootDefinition();
+        FieldDefinition primaryKey = root.getPrimaryKey();
+        query.append("where ").append(root.getName().toLowerCase())
+                .append(".").append(primaryKey.getColumn()).append(" = ?");
+        parameterBindings.put(root.getName() + "." + primaryKey.getName(), parameterIndex);
     }
 
     protected void appendFullUpdateClause(StringBuilder query, EntityDefinition definition) {
@@ -343,28 +353,23 @@ public class MySqlQueryBuilder implements QueryBuilder {
 
     protected void appendJoinClause(StringBuilder query, EntityDefinition mainDefinition,
             EntityDefinition joinedDefinition, boolean isLeft) {
+        String joinedColumn = getPrimaryColumn(joinedDefinition);
+        appendJoinClause(query, mainDefinition, joinedDefinition, joinedColumn, isLeft);
+    }
+
+    protected void appendJoinClause(StringBuilder query, EntityDefinition mainDefinition,
+            EntityDefinition joinedDefinition, String joinedColumn, boolean isLeft) {
         if (isLeft) {
             query.append("left ");
         }
         String joinedName = joinedDefinition.getName().toLowerCase();
+        String mainColumn = getPrimaryColumn(mainDefinition);
         query.append("join ");
         query.append(joinedDefinition.getTable()).append(" as ").append(joinedName);
         query.append(" on ").append(mainDefinition.getName().toLowerCase()).append(".")
-                .append(mainDefinition.getPrimaryKey().getColumn());
+                .append(mainColumn);
         query.append(" = ").append(joinedName)
-                .append(".").append(joinedDefinition.getPrimaryKey().getColumn());
-    }
-
-    protected void appendJoinByForeignKeyClause(StringBuilder query, EntityDefinition fieldEntityDefinition,
-            CollectionDefinition fieldDefinition) {
-        String joinedTable = fieldDefinition.getReferencedEntity().getTable();
-        String joinedAlias = fieldDefinition.getName().toLowerCase()
-                + fieldDefinition.getReferencedEntity().getName().toLowerCase();
-        query.append("join ").append(joinedTable).append(" as ")
-                .append(joinedAlias);
-        query.append(" on ").append(fieldEntityDefinition.getName().toLowerCase()).append(".")
-                .append(fieldEntityDefinition.getPrimaryKey().getColumn());
-        query.append(" = ").append(joinedAlias).append(".").append(fieldDefinition.getForeignKeyColumn());
+                .append(".").append(joinedColumn);
     }
 
     protected int appendSetFieldList(StringBuilder query, EntityDefinition definition,
@@ -377,11 +382,7 @@ public class MySqlQueryBuilder implements QueryBuilder {
             isCommaNeeded = lastIndex > 0;
         }
         String name = definition.getName().toLowerCase();
-        String primaryKeyName = definition.getPrimaryKey().getName();
-        for (FieldDefinition field : definition.getSingleFields()) {
-            if (primaryKeyName.equals(field.getName())) {
-                continue;
-            }
+        for (FieldDefinition field : definition.getSingleFields(false)) {
             if (isCommaNeeded) {
                 query.append(", ");
             } else {
@@ -411,17 +412,17 @@ public class MySqlQueryBuilder implements QueryBuilder {
         return subquery.toString();
     }
 
-    protected void appendSetOrdering(StringBuilder query, ListDefinition listField) {
-        String name = listField.getReferencedEntity().getName().toLowerCase();
+    protected void appendSetOrdering(StringBuilder query, ListFieldDefinition listField) {
+        String name = listField.getReferencedDefinition().getName().toLowerCase();
         String orderingColumn = listField.getOrderColumn();
         query.append(name).append(".").append(orderingColumn)
                 .append(" = ").append(ORDERING_SUBQUERY_ALIAS).append(".").append(ORDER_COLUMN);
     }
 
-    protected void appendLinkListQueryMacro(StringBuilder query, ListDefinition listField) {
-        String table = listField.getReferencedEntity().getTable();
-        String name = listField.getReferencedEntity().getName().toLowerCase();
-        String primaryKeyColumn = listField.getReferencedEntity().getPrimaryKey().getColumn();
+    protected void appendLinkListQueryMacro(StringBuilder query, ListFieldDefinition listField) {
+        String table = listField.getReferencedDefinition().getTable();
+        String name = listField.getReferencedDefinition().getName().toLowerCase();
+        String primaryKeyColumn = listField.getReferencedDefinition().getPrimaryKey().getColumn();
         query.append("update ").append(table).append(" as ").append(name).append(" join (")
                 .append(ORDERING_SUBQUERY_MACRO).append(") ").append(ORDERING_SUBQUERY_ALIAS);
         query.append(" on ").append(name).append(".").append(primaryKeyColumn)
@@ -432,9 +433,9 @@ public class MySqlQueryBuilder implements QueryBuilder {
         appendSetOrdering(query, listField);
     }
 
-    protected void appendLinkCollectionQueryMacro(StringBuilder query, CollectionDefinition field) {
-        String table = field.getReferencedEntity().getTable();
-        String name = field.getReferencedEntity().getName().toLowerCase();
+    protected void appendLinkCollectionQueryMacro(StringBuilder query, CollectionFieldDefinition field) {
+        String table = field.getReferencedDefinition().getTable();
+        String name = field.getReferencedDefinition().getName().toLowerCase();
         query.append("update ").append(table).append(" as ").append(name);
         query.append(" ");
         appendSetForeignKeys(query, field);
@@ -442,36 +443,43 @@ public class MySqlQueryBuilder implements QueryBuilder {
         appendKeysInMacro(query, field);
     }
 
-    protected void appendSetForeignKeys(StringBuilder query, CollectionDefinition field) {
-        String name = field.getReferencedEntity().getName().toLowerCase();
+    protected void appendSetForeignKeys(StringBuilder query, CollectionFieldDefinition field) {
+        String name = field.getReferencedDefinition().getName().toLowerCase();
         query.append("set ").append(name).append(".")
                 .append(field.getForeignKeyColumn()).append(" = ?");
     }
 
-    protected void appendKeysInMacro(StringBuilder query, CollectionDefinition field) {
-        String primaryKeyColumn = field.getReferencedEntity().getPrimaryKey().getColumn();
-        String tableAlias = field.getReferencedEntity().getName().toLowerCase();
+    protected void appendKeysInMacro(StringBuilder query, CollectionFieldDefinition field) {
+        String primaryKeyColumn;
+        EntityDefinition referencedDefinition = field.getReferencedDefinition();
+        if (referencedDefinition.getParentDefinition() != null) {
+            primaryKeyColumn = referencedDefinition.getParentJoinColumn();
+        } else {
+            primaryKeyColumn = referencedDefinition.getPrimaryKey().getColumn();
+        }
+        String tableAlias = referencedDefinition.getName().toLowerCase();
         query.append(tableAlias).append(".").append(primaryKeyColumn)
                 .append(" in (").append(LIST_MACRO).append(")");
     }
 
-    protected void appendSetClearedForeignKeys(StringBuilder query, CollectionDefinition field) {
-        String name = field.getReferencedEntity().getName().toLowerCase();
+    protected void appendSetClearedForeignKeys(StringBuilder query, CollectionFieldDefinition field) {
+        String name = field.getReferencedDefinition().getName().toLowerCase();
         String foreignKeyColumn = field.getForeignKeyColumn();
         query.append("set ").append(name).append(".").append(foreignKeyColumn)
                 .append(" = null");
     }
 
-    protected void appendSetClearedOrdering(StringBuilder query, ListDefinition listField) {
-        String name = listField.getReferencedEntity().getName().toLowerCase();
+    protected void appendSetClearedOrdering(StringBuilder query, ListFieldDefinition listField) {
+        String name = listField.getReferencedDefinition().getName().toLowerCase();
         query.append(name).append(".").append(listField.getOrderColumn())
                 .append(" = null");
     }
 
-    protected void appendUnlinkCollectionWhereClauseMacro(StringBuilder query, CollectionDefinition field,
+    protected void appendUnlinkCollectionWhereClauseMacro(StringBuilder query, CollectionFieldDefinition field,
             boolean isEmpty) {
-        String primaryKeyColumn = field.getReferencedEntity().getPrimaryKey().getColumn();
-        String name = field.getReferencedEntity().getName().toLowerCase();
+        EntityDefinition referencedDefinition = field.getReferencedDefinition();
+        String primaryKeyColumn = getPrimaryColumn(referencedDefinition);
+        String name = referencedDefinition.getName().toLowerCase();
         query.append("where ").append(name).append(".").append(field.getForeignKeyColumn())
                 .append(" = ?");
         if (!isEmpty) {
@@ -480,10 +488,13 @@ public class MySqlQueryBuilder implements QueryBuilder {
         }
     }
 
-    protected void appendWherePrimaryKeyInListMacro(StringBuilder query, EntityDefinition definition) {
-        query.append("where ").append(definition.getName().toLowerCase())
-                .append(".").append(definition.getPrimaryKey().getColumn()).append(" in (")
-                .append(LIST_MACRO).append(")");
+    protected void appendWherePrimaryKeyInListMacro(StringBuilder query, EntityDefinition definition,
+            Map<String, Integer> parameterBindings, int parameterIndex) {
+        EntityDefinition root = definition.getRootDefinition();
+        FieldDefinition primaryKey = root.getPrimaryKey();
+        query.append("where ").append(root.getName().toLowerCase()).append(".")
+                .append(primaryKey.getColumn()).append(" in (").append(LIST_MACRO).append(")");
+        parameterBindings.put(root.getName() + "." + primaryKey.getName(), parameterIndex);
     }
 
     public QueryDescriptor resolveMacros(QueryDescriptor descriptor,
@@ -497,7 +508,7 @@ public class MySqlQueryBuilder implements QueryBuilder {
             }
         }
         String resolvedQuery = getResolvedQuery(descriptor.getQuery(), sizes.values());
-        Map<String, Integer> resolvedParameters = getResolvedIndices(descriptor.getParameterBindings(), 
+        Map<String, Integer> resolvedParameters = getResolvedIndices(descriptor.getParameterBindings(),
                 sizes);
         return new QueryDescriptor(resolvedQuery, resolvedParameters,
                 descriptor.getResultBindings());
@@ -559,14 +570,21 @@ public class MySqlQueryBuilder implements QueryBuilder {
         return list.toString();
     }
 
-    protected void appendWhereForeignKeyClause(StringBuilder query, CollectionDefinition field) {
-        String name = field.getReferencedEntity().getName().toLowerCase();
+    protected void appendWhereForeignKeyClause(StringBuilder query, CollectionFieldDefinition field) {
+        String name = field.getReferencedDefinition().getName().toLowerCase();
         query.append("where ").append(name).append(".").append(field.getForeignKeyColumn())
                 .append(" = ?");
     }
 
-    protected void appendOrderByClause(StringBuilder query, ListDefinition listField) {
-        String name = listField.getReferencedEntity().getName().toLowerCase();
+    protected void appendOrderByClause(StringBuilder query, ListFieldDefinition listField) {
+        String name = listField.getReferencedDefinition().getName().toLowerCase();
         query.append("order by ").append(name).append(".").append(listField.getOrderColumn());
+    }
+
+    protected String getPrimaryColumn(EntityDefinition definition) {
+        if (definition.getParentDefinition() != null) {
+            return definition.getParentJoinColumn();
+        }
+        return definition.getPrimaryKey().getColumn();
     }
 }

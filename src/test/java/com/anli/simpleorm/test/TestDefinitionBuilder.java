@@ -1,11 +1,11 @@
 package com.anli.simpleorm.test;
 
 import com.anli.simpleorm.controller.PrimaryKeyGenerator;
-import com.anli.simpleorm.definitions.CollectionDefinition;
+import com.anli.simpleorm.definitions.CollectionFieldDefinition;
 import com.anli.simpleorm.definitions.EntityDefinition;
 import com.anli.simpleorm.definitions.FieldDefinition;
-import com.anli.simpleorm.definitions.ListDefinition;
-import com.anli.simpleorm.definitions.ReferenceDefinition;
+import com.anli.simpleorm.definitions.ListFieldDefinition;
+import com.anli.simpleorm.definitions.ReferenceFieldDefinition;
 import com.anli.simpleorm.test.entities.Atomic;
 import com.anli.simpleorm.test.entities.ConcreteA;
 import com.anli.simpleorm.test.entities.ConcreteB;
@@ -15,75 +15,84 @@ import com.anli.simpleorm.test.entities.Super;
 public class TestDefinitionBuilder {
 
     public static EntityDefinition getAtomicDefinition(PrimaryKeyGenerator generator) {
-        EntityDefinition definition = new EntityDefinition(Atomic.class, "Atomic", generator);
-        definition.setTable("atomics");
         FieldDefinition idField = new FieldDefinition("id", "atomic_id");
         FieldDefinition nameField = new FieldDefinition("name", "atomic_name");
+        EntityDefinition definition = new EntityDefinition(Atomic.class, "Atomic", "atomics",
+                generator, idField);
         definition.addSingleField(nameField);
-        definition.addSingleField(idField);
-        definition.setPrimaryKeyName("id");
         return definition;
     }
 
-    public static EntityDefinition getConcreteADefinition(PrimaryKeyGenerator generator) {
-        EntityDefinition definition = new EntityDefinition(ConcreteA.class, "ConcreteA", generator);
-        definition.setTable("concretes_a");
-        FieldDefinition idField = new FieldDefinition("id", "concrete_a_id");
+    public static EntityDefinition getConcreteADefinition(PrimaryKeyGenerator generator, boolean withParent) {
+        EntityDefinition definition;
+        if (withParent) {
+            definition = new EntityDefinition(ConcreteA.class, "ConcreteA",
+                    "concretes_a", generator, "concrete_a_id");
+        } else {
+            FieldDefinition idField = new FieldDefinition("id", "concrete_a_id");
+            definition = new EntityDefinition(ConcreteA.class, "ConcreteA",
+                    "concretes_a", generator, idField);
+        }
         FieldDefinition timeField = new FieldDefinition("time", "time_field");
         EntityDefinition atomicDef = getAtomicDefinition(generator);
-        ReferenceDefinition atomicReferenceField = new ReferenceDefinition("atomic", "atomic_ref",
+        ReferenceFieldDefinition atomicReferenceField = new ReferenceFieldDefinition("atomic", "atomic_ref",
                 atomicDef, true);
-        CollectionDefinition atomicsCollectionField = new CollectionDefinition("atomicSet", "a_ref",
+        CollectionFieldDefinition atomicsCollectionField = new CollectionFieldDefinition("atomicSet", "a_ref",
                 atomicDef, false);
-        definition.addSingleField(idField);
         definition.addSingleField(timeField);
         definition.addSingleField(atomicReferenceField);
         definition.addCollectionField(atomicsCollectionField);
-        definition.setPrimaryKeyName("id");
         return definition;
     }
 
-    public static EntityDefinition getConcreteBDefinition(PrimaryKeyGenerator generator) {
-        EntityDefinition definition = new EntityDefinition(ConcreteB.class, "ConcreteB", generator);
-        definition.setTable("concretes_b");
-        FieldDefinition idField = new FieldDefinition("id", "concrete_b_id");
+    public static EntityDefinition getConcreteBDefinition(PrimaryKeyGenerator generator,
+            boolean withParent) {
+        EntityDefinition definition;
+        if (withParent) {
+            definition = new EntityDefinition(ConcreteB.class, "ConcreteB",
+                "concretes_b", generator, "concrete_b_id");
+        } else {
+            FieldDefinition idField = new FieldDefinition("id", "concrete_b_id");
+            definition = new EntityDefinition(ConcreteB.class, "ConcreteB",
+                "concretes_b", generator, idField);
+        }
         FieldDefinition nameField = new FieldDefinition("name", "name_field");
         EntityDefinition atomicDef = getAtomicDefinition(generator);
-        ReferenceDefinition atomicReferenceField = new ReferenceDefinition("atomic", "atomic_ref",
+        ReferenceFieldDefinition atomicReferenceField = new ReferenceFieldDefinition("atomic", "atomic_ref",
                 atomicDef, false);
-        ListDefinition atomicsCollectionField = new ListDefinition("atomicList", "b_ref",
+        ListFieldDefinition atomicsCollectionField = new ListFieldDefinition("atomicList", "b_ref",
                 atomicDef, "b_order", true);
-        definition.addSingleField(idField);
         definition.addSingleField(nameField);
         definition.addSingleField(atomicReferenceField);
         definition.addCollectionField(atomicsCollectionField);
-        definition.setPrimaryKeyName("id");
         return definition;
     }
 
-    public static EntityDefinition getSuperDefinition(PrimaryKeyGenerator generator) {
-        EntityDefinition aDefinition = getConcreteADefinition(generator);
-        EntityDefinition bDefinition = getConcreteBDefinition(generator);
-        EntityDefinition superDefinition = new EntityDefinition(Super.class, "Super", generator);
-        superDefinition.addChildrenEntity(aDefinition);
-        superDefinition.addChildrenEntity(bDefinition);
-        FieldDefinition keyField = new FieldDefinition("id", "super_id");
+    public static EntityDefinition getSuperDefinition(PrimaryKeyGenerator generator, boolean withParent) {
+        EntityDefinition aDefinition = getConcreteADefinition(generator, true);
+        EntityDefinition bDefinition = getConcreteBDefinition(generator, true);
+        EntityDefinition superDefinition;
+        if (withParent) {
+            superDefinition = new EntityDefinition(Super.class, "Super", "supers",
+                generator, "super_id");
+        } else {
+            FieldDefinition idField = new FieldDefinition("id", "super_id");
+            superDefinition = new EntityDefinition(Super.class, "Super", "supers",
+                generator, idField);
+        }
+        superDefinition.addChildDefinition(aDefinition);
+        superDefinition.addChildDefinition(bDefinition);
         FieldDefinition numberField = new FieldDefinition("number", "number_column");
         superDefinition.addSingleField(numberField);
-        superDefinition.addSingleField(keyField);
-        superDefinition.setTable("supers");
-        superDefinition.setPrimaryKeyName("id");
         return superDefinition;
     }
 
     public static EntityDefinition getRootDefinition(PrimaryKeyGenerator generator) {
-        EntityDefinition superDef = getSuperDefinition(generator);
-        EntityDefinition root = new EntityDefinition(Root.class, "Root", generator);
-        root.addChildrenEntity(superDef);
+        EntityDefinition superDef = getSuperDefinition(generator, true);
         FieldDefinition keyField = new FieldDefinition("id", "root_id");
-        root.addSingleField(keyField);
-        root.setTable("roots");
-        root.setPrimaryKeyName("id");
+        EntityDefinition root = new EntityDefinition(Root.class, "Root", "roots",
+                generator, keyField);
+        root.addChildDefinition(superDef);
         return root;
     }
 }

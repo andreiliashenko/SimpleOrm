@@ -172,27 +172,24 @@ public abstract class SqlEngine {
 
         protected DataRow getRow(TransformingResultSet resultSet) throws SQLException {
             DataRow row = getNewRow();
-            for (FieldDescriptor field : getDescriptor().getSingleFields()) {
-                for (String binding : field.getAllBindings()) {
-                    row.put(binding, resultSet.getValue(getQuery().getResultBinding(binding),
-                            getDataRowClass(field)));
-                }
-            }
-            for (EntityDescriptor child : getDescriptor().getChildrenDescriptors()) {
-                populateRowForChild(resultSet, child, row);
-            }
+            populateRow(resultSet, getDescriptor(), row);
             return row;
         }
 
-        protected void populateRowForChild(TransformingResultSet resultSet,
+        protected void populateRow(TransformingResultSet resultSet,
                 EntityDescriptor descriptor, DataRow row) throws SQLException {
             for (FieldDescriptor field : descriptor.getSingleFields()) {
                 String binding = field.getBinding();
                 row.put(binding, resultSet.getValue(getQuery().getResultBinding(binding),
                         getDataRowClass(field)));
             }
+            if (descriptor.isInherited()) {
+                String joinBinding = descriptor.getParentJoinBinding();
+                row.put(joinBinding, resultSet.getValue(getQuery().getResultBinding(joinBinding),
+                        descriptor.getPrimaryKeyClass()));
+            }
             for (EntityDescriptor childDescriptor : descriptor.getChildrenDescriptors()) {
-                populateRowForChild(resultSet, childDescriptor, row);
+                populateRow(resultSet, childDescriptor, row);
             }
         }
 

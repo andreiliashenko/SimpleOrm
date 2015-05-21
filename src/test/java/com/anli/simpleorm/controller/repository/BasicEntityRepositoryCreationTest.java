@@ -1,6 +1,10 @@
 package com.anli.simpleorm.controller.repository;
 
+import com.anli.simpleorm.controller.EntityRepository;
+import com.anli.simpleorm.descriptors.UnitDescriptorManager;
 import com.anli.simpleorm.sql.DataRow;
+import com.anli.simpleorm.test.MockSqlEngine;
+import com.anli.simpleorm.test.TestKeyGenerator;
 import com.anli.simpleorm.test.entities.Atomic;
 import com.anli.simpleorm.test.entities.ConcreteA;
 import com.anli.simpleorm.test.entities.ConcreteB;
@@ -8,14 +12,29 @@ import com.anli.simpleorm.test.entities.Root;
 import com.anli.simpleorm.test.entities.Super;
 import java.math.BigInteger;
 import java.util.Map;
+import org.junit.Before;
 import org.junit.Test;
 
+import static com.anli.simpleorm.test.TestDescriptorManagerBuilder.getTestManager;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
-public class BasicEntityRepositoryTest_Creation extends BasicEntityRepositoryTest {
+public class BasicEntityRepositoryCreationTest {
+
+    protected TestKeyGenerator keyGenerator;
+    protected UnitDescriptorManager descriptorManager;
+    protected MockSqlEngine sqlEngine;
+    protected EntityRepository repository;
+
+    @Before
+    public void setUp() {
+        keyGenerator = new TestKeyGenerator();
+        descriptorManager = getTestManager(keyGenerator);
+        sqlEngine = new MockSqlEngine();
+        repository = new BasicEntityRepository(descriptorManager, sqlEngine);
+    }
 
     @Test
     public void testCreate_atomic() {
@@ -58,9 +77,10 @@ public class BasicEntityRepositoryTest_Creation extends BasicEntityRepositoryTes
         DataRow rootRow = rootMap.get(BigInteger.valueOf(1));
         DataRow superRow = superMap.get(BigInteger.valueOf(1));
         assertSame(rootRow, superRow);
-        assertTrue(rootRow.size() == 2);
+        assertTrue(rootRow.size() == 3);
         assertEquals(BigInteger.valueOf(1), rootRow.get("Root.id"));
         assertEquals(BigInteger.valueOf(1), rootRow.get("Super.id"));
+        assertEquals(BigInteger.valueOf(1), rootRow.get("Super.parentJoinKey"));
     }
 
     @Test
@@ -83,10 +103,12 @@ public class BasicEntityRepositoryTest_Creation extends BasicEntityRepositoryTes
         DataRow aRow = aMap.get(BigInteger.valueOf(1));
         assertSame(rootRow, superRow);
         assertSame(superRow, aRow);
-        assertTrue(rootRow.size() == 3);
+        assertTrue(rootRow.size() == 5);
         assertEquals(BigInteger.valueOf(1), rootRow.get("Root.id"));
         assertEquals(BigInteger.valueOf(1), rootRow.get("Super.id"));
+        assertEquals(BigInteger.valueOf(1), rootRow.get("Super.parentJoinKey"));
         assertEquals(BigInteger.valueOf(1), rootRow.get("ConcreteA.id"));
+        assertEquals(BigInteger.valueOf(1), rootRow.get("ConcreteA.parentJoinKey"));
     }
 
     @Test
@@ -109,9 +131,11 @@ public class BasicEntityRepositoryTest_Creation extends BasicEntityRepositoryTes
         DataRow bRow = bMap.get(BigInteger.valueOf(1));
         assertSame(rootRow, superRow);
         assertSame(superRow, bRow);
-        assertTrue(rootRow.size() == 3);
+        assertTrue(rootRow.size() == 5);
         assertEquals(BigInteger.valueOf(1), rootRow.get("Root.id"));
         assertEquals(BigInteger.valueOf(1), rootRow.get("Super.id"));
+        assertEquals(BigInteger.valueOf(1), rootRow.get("Super.parentJoinKey"));
         assertEquals(BigInteger.valueOf(1), rootRow.get("ConcreteB.id"));
+        assertEquals(BigInteger.valueOf(1), rootRow.get("ConcreteB.parentJoinKey"));
     }
 }

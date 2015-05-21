@@ -25,16 +25,23 @@ public class EntityDescriptor {
     protected final EntityQuerySet querySet;
     protected final Map<String, FieldDescriptor> fields;
 
+    protected final String parentJoinBinding;
     protected String primaryKeyName;
 
     public EntityDescriptor(Class entityClass, PrimaryKeyGenerator primaryKeyGenerator,
             EntityProcessor processor, EntityQuerySet querySet) {
+        this(entityClass, primaryKeyGenerator, processor, querySet, null);
+    }
+
+    public EntityDescriptor(Class entityClass, PrimaryKeyGenerator primaryKeyGenerator,
+            EntityProcessor processor, EntityQuerySet querySet, String parentJoinBinding) {
         this.entityClass = entityClass;
         this.primaryKeyGenerator = primaryKeyGenerator;
         this.processor = processor;
         this.querySet = querySet;
         this.childrenDescriptors = new LinkedList<>();
         this.fields = new HashMap<>();
+        this.parentJoinBinding = parentJoinBinding;
     }
 
     public Class getEntityClass() {
@@ -100,6 +107,14 @@ public class EntityDescriptor {
 
     public String getPrimaryKeyBinding() {
         return getField(primaryKeyName).getBinding();
+    }
+
+    public String getParentJoinBinding() {
+        return parentJoinBinding;
+    }
+
+    public boolean isInherited() {
+        return getParentJoinBinding() != null;
     }
 
     protected static class ReferenceFilter implements Predicate<FieldDescriptor> {

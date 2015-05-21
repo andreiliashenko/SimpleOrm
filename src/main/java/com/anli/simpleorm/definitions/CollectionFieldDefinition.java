@@ -1,15 +1,15 @@
 package com.anli.simpleorm.definitions;
 
-public class CollectionDefinition extends ReferenceDefinition {
+public class CollectionFieldDefinition extends ReferenceFieldDefinition {
 
-    public CollectionDefinition(String name, String foreignKeyColumn,
+    public CollectionFieldDefinition(String name, String foreignKeyColumn,
             EntityDefinition referencedEntity, boolean lazy) {
         super(name, foreignKeyColumn, referencedEntity, lazy);
     }
 
     @Override
     public String getColumn() {
-        return referencedEntity.getPrimaryKey().getColumn();
+        return referencedDefinition.getPrimaryKey().getColumn();
     }
 
     public String getForeignKeyColumn() {
