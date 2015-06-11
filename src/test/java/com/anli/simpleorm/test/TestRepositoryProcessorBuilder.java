@@ -68,10 +68,9 @@ public class TestRepositoryProcessorBuilder {
         return processor;
     }
 
-    public static EntityProcessor getConcreteBProcessor(Class proxyClass) throws NoSuchFieldException,
+    public static EntityProcessor getConcreteBProcessor() throws NoSuchFieldException,
             NoSuchMethodException {
-        RepositoryHandlerData handlerData = new RepositoryHandlerData();
-        RepositoryProcessor processor = new RepositoryProcessor(ConcreteB.class, proxyClass, handlerData);
+        RepositoryProcessor processor = new RepositoryProcessor(ConcreteB.class);
         FieldProcessor idProcessor = new FieldProcessor(Root.class.getDeclaredField("id"), "id");
         FieldProcessor numberProcessor =
                 new FieldProcessor(Super.class.getDeclaredField("number"), "number");

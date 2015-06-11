@@ -53,7 +53,6 @@ public class TestDescriptorManagerBuilder {
     protected static final Map<String, Integer> linkageParameterBinding = new HashMap<>();
     protected static final Map<String, Integer> reversedLinkageParameterBinding = new HashMap<>();
     protected static final Class concreteAProxy = new ProxyClassFactory().createProxyClass(ConcreteA.class);
-    protected static final Class concreteBProxy = new ProxyClassFactory().createProxyClass(ConcreteB.class);
 
     static {
         linkageParameterBinding.put("foreignKey", 1);
@@ -64,10 +63,6 @@ public class TestDescriptorManagerBuilder {
 
     public static Class getConcreteAProxy() {
         return concreteAProxy;
-    }
-
-    public static Class getConcreteBProxy() {
-        return concreteBProxy;
     }
 
     protected static CollectionFieldDescriptor getAtomicSetDescriptor() {
@@ -123,7 +118,7 @@ public class TestDescriptorManagerBuilder {
                 Atomic.class, true, false);
         FieldDescriptor atomicList = getAtomicListDescriptor();
         EntityDescriptor descriptor = new EntityDescriptor(ConcreteB.class, generator,
-                getConcreteBProcessor(concreteBProxy), null, "ConcreteB.parentJoinKey");
+                getConcreteBProcessor(), null, "ConcreteB.parentJoinKey");
         descriptor.addPrimaryKey(idField);
         descriptor.addField(numberField);
         descriptor.addField(nameField);
@@ -214,7 +209,6 @@ public class TestDescriptorManagerBuilder {
             throw new RuntimeException(ex);
         }
         manager.addProxy(ConcreteA.class, concreteAProxy);
-        manager.addProxy(ConcreteB.class, concreteBProxy);
         return manager;
     }
 }
