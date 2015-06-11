@@ -39,14 +39,14 @@ public class RepositoryMethodHandler extends EntityMethodHandler {
     @Override
     public Object invoke(Object self, Method method, Method proceed, Object[] arguments) throws Throwable {
         FieldProcessor processor = getRepositoryHandlerData()
-                .getLazyCollectionProcessorByGetter(proceed);
+                .getLazyCollectionProcessorByGetter(method);
         if (processor != null) {
             if (isLazyClean(processor.getName())) {
                 throw new LazyFieldException();
             }
         }
         processor = getRepositoryHandlerData()
-                .getLazyCollectionProcessorBySetter(proceed);
+                .getLazyCollectionProcessorBySetter(method);
         if (processor != null) {
             Object result = proceed.invoke(self, arguments);
             clearLazyCollectionClean(processor.getName());

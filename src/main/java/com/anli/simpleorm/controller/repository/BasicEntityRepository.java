@@ -27,6 +27,7 @@ import java.util.TreeMap;
 
 import static com.google.common.base.Preconditions.checkNotNull;
 import static com.google.common.base.Preconditions.checkState;
+import static java.util.Collections.emptyMap;
 import static java.util.Collections.emptySet;
 
 public class BasicEntityRepository extends AbstractEntityController implements EntityRepository {
@@ -55,7 +56,7 @@ public class BasicEntityRepository extends AbstractEntityController implements E
 
     @Override
     public <E> void save(E entity) {
-        checkNotNull(entity);
+        checkNotNull(entity, "Entity cannot be null");
         Class entityClass = resolveEntityClass(entity.getClass());
         checkConsistency(entity, entityClass);
         Collection inconsistent = getInconsistentReferences(entity, entityClass);
@@ -63,6 +64,7 @@ public class BasicEntityRepository extends AbstractEntityController implements E
         if (!inconsistent.isEmpty()) {
             throw new NonExistentEntitiesException(inconsistent);
         }
+        storeEntity(entity);
     }
 
     @Override
@@ -223,6 +225,7 @@ public class BasicEntityRepository extends AbstractEntityController implements E
             E entity = (E) cache.get(entityClass, primaryKey);
             if (entity == null) {
                 entity = loadEntityByPrimaryKey(primaryKey, entityClass, this);
+                cache.put(resolveEntityClass(entityClass), primaryKey, entity);
             }
             return entity;
         }
@@ -253,6 +256,9 @@ public class BasicEntityRepository extends AbstractEntityController implements E
         }
 
         protected <E> Map<Object, E> getEntityMap(Class<E> elementClass, Collection keys) {
+            if (keys == null || keys.isEmpty()) {
+                return emptyMap();
+            }
             Map<Object, DataRow> dataMap = getSqlEngine().getCollectionData(elementClass, keys);
             Map<Object, E> entityMap = new HashMap<>((int) (dataMap.size() / 0.75));
             for (Map.Entry<Object, DataRow> entry : dataMap.entrySet()) {

@@ -16,4 +16,12 @@ public class Atomic implements IAtomic {
     public String getName() {
         return name;
     }
+
+    public void setId(BigInteger id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
 }

@@ -39,7 +39,7 @@ public abstract class EntityMethodHandler implements MethodHandler {
 
     @Override
     public Object invoke(Object self, Method method, Method proceed, Object[] arguments) throws Throwable {
-        FieldProcessor fieldProcessor = getHanlderData().getLazyReferenceProcessorByGetter(proceed);
+        FieldProcessor fieldProcessor = getHanlderData().getLazyReferenceProcessorByGetter(method);
         if (fieldProcessor != null) {
             String fieldName = fieldProcessor.getName();
             if (isLazyClean(fieldName)) {
@@ -49,7 +49,7 @@ public abstract class EntityMethodHandler implements MethodHandler {
             }
         }
         Object result = proceed.invoke(self, arguments);
-        fieldProcessor = getHanlderData().getLazyReferenceProcessorBySetter(proceed);
+        fieldProcessor = getHanlderData().getLazyReferenceProcessorBySetter(method);
         if (fieldProcessor != null) {
             clearLazyReferenceValue(fieldProcessor.getName());
         }

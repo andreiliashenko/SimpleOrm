@@ -62,6 +62,14 @@ public class TestDescriptorManagerBuilder {
         reversedLinkageParameterBinding.put("foreignKey", 2);
     }
 
+    public static Class getConcreteAProxy() {
+        return concreteAProxy;
+    }
+
+    public static Class getConcreteBProxy() {
+        return concreteBProxy;
+    }
+
     protected static CollectionFieldDescriptor getAtomicSetDescriptor() {
         CollectionQuerySet atomicSetQueries = new CollectionQuerySet();
         atomicSetQueries.setClearCollectionQuery(new QueryDescriptor(CLEAR_ATOMIC_SET,
@@ -73,7 +81,7 @@ public class TestDescriptorManagerBuilder {
         atomicSetQueries.setSelectCollectionKeysQuery(new QueryDescriptor(SELECT_ATOMIC_SET,
                 singletonMap("foreignKey", 1), singletonMap("Atomic.id", "atomic_id")));
         return new CollectionFieldDescriptor("atomicSet", "ConcreteA.atomicSet",
-                Set.class, Atomic.class, atomicSetQueries);
+                Set.class, Atomic.class, atomicSetQueries, true);
     }
 
     protected static CollectionFieldDescriptor getAtomicListDescriptor() {
@@ -85,7 +93,7 @@ public class TestDescriptorManagerBuilder {
         atomicListQueries.setUnlinkCollectionQuery(new QueryDescriptor(UNLINK_ATOMIC_LIST_MAIN + LIST_MACRO,
                 linkageParameterBinding, (Map) emptyMap()));
         return new CollectionFieldDescriptor("atomicList", "ConcreteB.atomicList",
-                List.class, Atomic.class, atomicListQueries, true);
+                List.class, Atomic.class, atomicListQueries);
     }
 
     protected static EntityDescriptor getConcreteADescriptor(PrimaryKeyGenerator generator)

@@ -4,7 +4,6 @@ import com.anli.simpleorm.controller.PrimaryKeyGenerator;
 import com.anli.simpleorm.queries.EntityQuerySet;
 import com.anli.simpleorm.reflective.EntityProcessor;
 import com.google.common.base.Predicate;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
@@ -62,10 +61,6 @@ public class EntityDescriptor {
 
     public EntityQuerySet getQuerySet() {
         return querySet;
-    }
-
-    public Collection<FieldDescriptor> getFields() {
-        return fields.values();
     }
 
     public void addPrimaryKey(FieldDescriptor field) {

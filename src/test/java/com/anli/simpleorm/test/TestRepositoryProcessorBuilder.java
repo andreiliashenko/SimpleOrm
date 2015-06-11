@@ -10,6 +10,7 @@ import com.anli.simpleorm.test.entities.ConcreteB;
 import com.anli.simpleorm.test.entities.IAtomic;
 import com.anli.simpleorm.test.entities.Root;
 import com.anli.simpleorm.test.entities.Super;
+import java.util.Set;
 
 public class TestRepositoryProcessorBuilder {
 
@@ -51,6 +52,10 @@ public class TestRepositoryProcessorBuilder {
                 new FieldProcessor(ConcreteA.class.getDeclaredField("atomic"), "atomic");
         FieldProcessor atomicSetProcessor =
                 new FieldProcessor(ConcreteA.class.getDeclaredField("atomicSet"), "atomicSet");
+        handlerData.addCollectionProcessorForGetter(ConcreteA.class.getDeclaredMethod("getAtomicSet"),
+                atomicSetProcessor);
+        handlerData.addCollectionProcessorForSetter(ConcreteA.class.getDeclaredMethod("setAtomicSet",
+                Set.class), atomicSetProcessor);
         handlerData.addReferenceProcessorForGetter(ConcreteA.class.getDeclaredMethod("getAtomic"),
                 atomicProcessor);
         handlerData.addReferenceProcessorForSetter(ConcreteA.class.getDeclaredMethod("setAtomic",
@@ -75,8 +80,6 @@ public class TestRepositoryProcessorBuilder {
                 new FieldProcessor(ConcreteB.class.getDeclaredField("atomic"), "atomic");
         FieldProcessor atomicListProcessor =
                 new FieldProcessor(ConcreteB.class.getDeclaredField("atomicList"), "atomicList");
-        handlerData.addCollectionProcessorForGetter(ConcreteB.class.getDeclaredMethod("getAtomic"),
-                atomicListProcessor);
         processor.addPrimaryKeyProcessor(idProcessor);
         processor.addFieldProcessor(numberProcessor);
         processor.addFieldProcessor(nameProcessor);

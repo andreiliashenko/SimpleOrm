@@ -115,7 +115,7 @@ public abstract class AbstractEntityController implements EntityController {
     protected <E> Class<? extends E> getEffectiveClass(EntityDescriptor descriptor, DataRow dataRow,
             Class root) {
         String keyBinding = descriptor.getParentJoinBinding();
-        if (dataRow.get(keyBinding) == null) {
+        if (keyBinding == null || dataRow.get(keyBinding) == null) {
             return root;
         }
         for (EntityDescriptor child : descriptor.getChildrenDescriptors()) {
